@@ -30,4 +30,6 @@ ADD assets/initrd.img /app/tftp/initrd.img
 
 RUN chmod 644 /app/tftp/vmlinuz && \
     chmod 644 /app/tftp/initrd.img
+
+RUN mkdir -p /config/images
 CMD /app/init
