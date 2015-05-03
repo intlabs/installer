@@ -16,4 +16,7 @@ ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe_im
 ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2 /config/images/coreos_production_image.bin.bz2
 ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2.sig /config/images/coreos_production_image.bin.bz2.sig
 
+RUN chmod 644 /app/tftp/coreos_production_pxe.vmlinuz && \
+    chmod 644 /app/tftp/coreos_production_pxe_image.cpio.gz
+
 CMD /app/init
