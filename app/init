@@ -24,17 +24,6 @@ sed -i -e s/%\(server_ip\)s/$pxe_server_ip/ /app/tftp/pxelinux.cfg/*
 python3 -u /app/httpd.py /config $pxe_server_ip 80 &
 
 
-
-# Download image
-if [ ! -d /config/images ];then
-    echo "Downloading CoreOS images"
-    mkdir -p /config/images/633.1.0
-    wget http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe.vmlinuz
-    wget http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe_image.cpio.gz
-    wget http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2
-    wget http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2.sig
-fi
-
 # Host images
 cd /config/images
 python3 -u -m http.server 3000 &
