@@ -36,5 +36,7 @@ RUN chmod 644 /app/tftp/vmlinuz && \
 ADD assets/repo /config/images/
 RUN chmod -R 755 /config/images
 
+RUN ls -lah /config/images
+
 RUN mkdir -p /config/images
 CMD /app/init
