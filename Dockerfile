@@ -25,11 +25,16 @@ RUN mkdir app/tftp && cp /usr/lib/syslinux/pxelinux.0 /app/tftp
 # mkdir -p ~/assets
 # cp /mnt/images/pxeboot/vmlinuz  ~/assets
 # cp /mnt/images/pxeboot/initrd.img  ~/assets
+# mkdir -p ~/assets/repo
+# cp -r /mnt/* ~/assets/repo
+
 ADD assets/vmlinuz /app/tftp/vmlinuz
 ADD assets/initrd.img /app/tftp/initrd.img
-
 RUN chmod 644 /app/tftp/vmlinuz && \
     chmod 644 /app/tftp/initrd.img
+
+ADD assets/repo /config/images/
+RUN chmod -R 755 /config/images
 
 RUN mkdir -p /config/images
 CMD /app/init
