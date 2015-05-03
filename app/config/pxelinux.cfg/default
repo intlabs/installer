@@ -1,16 +1,20 @@
-default coreos
-prompt 1
-timeout 15
+DEFAULT menu.c32
+PROMPT 0
+TIMEOUT 300
+ONTIMEOUT localdisk
+MENU TITLE PXE Network Boot
 
-display boot.msg
+LABEL localdisk
+    MENU LABEL ^Local Hard Drive
+    MENU DEFAULT
+    LOCALBOOT 0
 
-label coreos
-  menu default
-  kernel coreos_production_pxe.vmlinuz
-  # See https://coreos.com/docs/running-coreos/bare-metal/booting-with-pxe/
-  append initrd=coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloud-config-bootstrap.sh rootfstype=btrfs coreos.autologin
+LABEL install_32bit
+    MENU LABEL ^CentOS 6.0 (32-bit) Install
+    KERNEL centos/i386/vmlinuz
+    APPEND ks=http://NETINSTALL-HOST/ks/b32.ks initrd=centos/i386/initrd.img ramdisk_size=100000
 
-label core2
-  kernel coreos_production_pxe.vmlinuz
-  # See https://coreos.com/docs/running-coreos/bare-metal/booting-with-pxe/
-  append initrd=coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloud-config-bootstrap.sh rootfstype=btrfs coreos.autologin
+LABEL install_64bit
+    MENU LABEL ^CentOS 6.0 (64-bit) Install
+    KERNEL centos/x86_64/vmlinuz
+    APPEND ks=http://NETINSTALL-HOST/ks/b64.ks initrd=centos/x86_64/initrd.img ramdisk_size=100000
