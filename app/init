@@ -33,7 +33,7 @@ dnsmasq \
     --dhcp-range=$pxe_server_ip,proxy \
     --dhcp-no-overrid \
     --dhcp-boot=pxelinux.0,pxeserver,$pxe_server_ip \
-    --pxe-service=x86PC,"Install CoreOS",pxelinux \
+    --pxe-service=x86PC,"Install CannyOS",pxelinux \
     --enable-tftp \
     --tftp-root=/app/tftp \
     --user=root \
