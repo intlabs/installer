@@ -25,7 +25,7 @@ python3 -u /app/httpd.py /config $pxe_server_ip 80 &
 
 
 # Host images
-cd /config/images
+cd /config/images && \
 python3 -u -m http.server 3000 &
 
 # Start dnsmasq as dhcp proxy to $pxe_server_ip
