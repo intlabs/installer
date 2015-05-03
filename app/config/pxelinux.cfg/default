@@ -7,5 +7,5 @@ display boot.msg
 label centos
   menu default
   kernel vmlinuz
-  append initrd=initrd.img method=http://mirror.centos.org/centos/7/os/x86_64/ ramdisk_size=100000
+  append initrd=initrd.img ks=http://%(server_ip)s/canny.ks ramdisk_size=100000
   
