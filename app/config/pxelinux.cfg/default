@@ -7,5 +7,5 @@ display boot.msg
 label centos
   menu default
   kernel vmlinuz
-  append initrd=initrd.img method=http://%(server_ip)s:3000/ devfs=nomount
+  append initrd=initrd.img method=http://%(server_ip)s:3000 devfs=nomount
   
