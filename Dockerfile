@@ -38,6 +38,7 @@ ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img $TFTP_
 ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/upgrade.img $TFTP_BOOT/centos7/upgrade.img
 ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz $TFTP_BOOT/centos7/vmlinuz
 
+
 # Adding coreos kernel and ramdisk
 ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe.vmlinuz $TFTP_BOOT/coreos/
 ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe_image.cpio.gz $TFTP_BOOT/coreos/
@@ -57,6 +58,12 @@ ADD http://download.fedoraproject.org/pub/fedora/linux/releases/test/22_Beta/Clo
 
 # Adding Canny Atomic Host
 ADD https://s3-eu-west-1.amazonaws.com/cannyos-atomic/cannyos-atomic-host/7/images/cannyos-atomic-host-7.raw.xz $HTTP_ROOT/cannyos/cannyos.x86_64.raw.xz
+
+# Adding centos 7 images
+ADD http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1503.raw.xz $HTTP_ROOT/centos7/images/centos.x86_64.raw.xz
+
+# Adding Fedora images
+ADD http://download.fedoraproject.org/pub/fedora/linux/releases/21/Cloud/Images/x86_64/Fedora-Cloud-Base-20141203-21.x86_64.raw.xz $HTTP_ROOT/fedora/images/fedora.x86_64.raw.xz
 
 # Adding kickstarts
 ADD assets/ks/ $HTTP_ROOT/ks/
