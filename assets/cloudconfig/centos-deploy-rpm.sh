@@ -15,6 +15,14 @@ mkdir -p $CLOUD_CONFIG_TEMP
 
 echo "CannyOS: Cloud config default local hostname"
 cat > $CLOUD_CONFIG_TEMP/meta-data << EOF
+network-interfaces: |
+  iface eth0 inet static
+  address 192.168.1.10
+  network 192.168.1.0
+  netmask 255.255.255.0
+  broadcast 192.168.1.255
+  gateway 192.168.1.254
+hostname: myhost
 local-hostname: fedora-atomic-host
 EOF
 
@@ -26,6 +34,7 @@ chpasswd: { expire: False }
 ssh_pwauth: True
 lock-passwd: False
 EOF
+
 
 until sudo docker pull cannyos/installer_configdrive; do sleep 2; done
 
@@ -45,5 +54,3 @@ echo "Config drive: $CONFIG_DRIVE"
 sudo dd bs=4M if=$CLOUD_CONFIG_TEMP/cannyos-cloudinit-data.iso of=/dev/$CONFIG_DRIVE
 
 
-
-sudo reboot
