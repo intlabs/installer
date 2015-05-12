@@ -60,7 +60,7 @@ ADD http://download.fedoraproject.org/pub/fedora/linux/releases/test/22_Beta/Clo
 ADD https://s3-eu-west-1.amazonaws.com/cannyos-atomic/cannyos-atomic-host/7/images/cannyos-atomic-host-7.raw.xz $HTTP_ROOT/cannyos/cannyos.x86_64.raw.xz
 
 # Adding centos 7 images
-ADD http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1503.raw.xz $HTTP_ROOT/centos7/images/centos.x86_64.raw.xz
+ADD http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1503.raw.xz $HTTP_ROOT/centos/images/centos.x86_64.raw.xz
 
 # Adding Fedora images
 ADD http://download.fedoraproject.org/pub/fedora/linux/releases/21/Cloud/Images/x86_64/Fedora-Cloud-Base-20141203-21.x86_64.raw.xz $HTTP_ROOT/fedora/images/fedora.x86_64.raw.xz

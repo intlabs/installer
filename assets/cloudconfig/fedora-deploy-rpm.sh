@@ -5,7 +5,7 @@
 
 echo "CannyOS: Installing Fedora to the first disc on this node"
 RAW_IMAGE_NAME="fedora.x86_64.raw"
-curl http://{{ SERVER_IP }}/fedora/$RAW_IMAGE_NAME.xz | xz -dc | sudo dd of=/dev/sda
+curl http://{{ SERVER_IP }}/fedora/images/$RAW_IMAGE_NAME.xz | xz -dc | sudo dd of=/dev/sda
 
 
 echo "CannyOS: Generating this nodes cloud config"

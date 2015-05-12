@@ -111,6 +111,10 @@ menu label ^12) Run DBAN and reset node
 kernel dban/dban.bzi
 append nuke="dwipe --autonuke --method quick" silent
 
+label 13
+menu label ^13) Install CannyOS Build Node (RPM) - CentOS From Packages
+kernel centos7/vmlinuz
+append initrd=centos7/initrd.img ks=http://%(server_ip)s/ks/cannyos-build-node.ks devfs=nomount ip=dhcp net.ifnames=0 biosdevname=0
 
 #label 2
 #menu label ^2) Install Fedora 22 Atomic x64  
