@@ -34,9 +34,9 @@ ADD assets/pxelinux.cfg/default $TFTP_BOOT/pxelinux.cfg/default
 ADD assets/dban/pxeboot/ $TFTP_BOOT/dban/
 
 # Adding centos 7 kernel and ramdisk
-#ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img $TFTP_BOOT/centos7/initrd.img
-#ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/upgrade.img $TFTP_BOOT/centos7/upgrade.img
-#ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz $TFTP_BOOT/centos7/vmlinuz
+ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img $TFTP_BOOT/centos7/initrd.img
+ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/upgrade.img $TFTP_BOOT/centos7/upgrade.img
+ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz $TFTP_BOOT/centos7/vmlinuz
 
 # Adding CannyOS 7 
 #ADD http://10.0.1.44:8000/installer/lorax/images/pxeboot/initrd.img $TFTP_BOOT/cannyos/initrd.img
