@@ -1,6 +1,6 @@
 install
-lang en_GB.UTF-8
-keyboard us
+keyboard --vckeymap=us --xlayouts='gb'
+lang en_US.UTF-8
 timezone Etc/UTC --isUtc
 auth --useshadow --enablemd5
 #selinux --disabled

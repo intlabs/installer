@@ -1,6 +1,7 @@
+text
 install
-lang en_GB.UTF-8
-keyboard us
+keyboard --vckeymap=us --xlayouts='gb'
+lang en_US.UTF-8
 timezone Etc/UTC --isUtc
 auth --useshadow --enablemd5
 #selinux --disabled
@@ -71,6 +72,8 @@ yum install -y epel-release
 yum update -y
 yum install -y rpm-ostree-toolbox
 yum install -y virt-manager xauth
+yum install -y git
+yum install -y cockpit
 
 echo "CannyOS: Installing requirements"
 
@@ -90,5 +93,11 @@ systemctl stop libvirtd.service
 systemctl start libvirtd.service
 systemctl enable libvirtd.service
 systemctl status libvirtd.service
+
+echo "CannyOS: starting cockpit service"
+systemctl stop cockpit.service
+systemctl start cockpit.service
+systemctl enable cockpit.service
+systemctl status cockpit.service
 
 %end
