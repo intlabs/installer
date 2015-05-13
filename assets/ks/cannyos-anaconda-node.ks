@@ -189,11 +189,11 @@ WorkingDirectory=/var/lib/etcd/
 EnvironmentFile=-/etc/etcd/etcd.conf
 User=etcd
 ExecStart=/usr/bin/etcd \
-  -name ${ETCD_NAME} \
-  -initial-advertise-peer-urls ${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
-  -listen-peer-urls ${ETCD_LISTEN_PEER_URLS} \
-  -listen-client-urls ${ETCD_LISTEN_CLIENT_URLS} \
-  -discovery ${ETCD_DISCOVERY}
+  -name \${ETCD_NAME} \
+  -initial-advertise-peer-urls \${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
+  -listen-peer-urls \${ETCD_LISTEN_PEER_URLS} \
+  -listen-client-urls \${ETCD_LISTEN_CLIENT_URLS} \
+  -discovery \${ETCD_DISCOVERY}
 Restart=on-failure
 
 [Install]
