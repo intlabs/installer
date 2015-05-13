@@ -1,6 +1,6 @@
 text
 lang en_US.UTF-8
-keyboard us
+keyboard uk
 timezone --utc Etc/UTC
 
 auth --useshadow --enablemd5
@@ -11,19 +11,19 @@ user --name=none
 firewall --disabled
 
 bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0"
-
 network --bootproto=dhcp --device=eth0 --activate --onboot=on
+
 services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-final
 # We use NetworkManager, and Avahi doesn't make much sense in the cloud
 services --disabled=network,avahi-daemon
 
 zerombr
 clearpart --all
-
 part /boot --size=300 --fstype="xfs"
 part pv.01 --grow
 volgroup atomicos pv.01
 logvol / --size=3000 --fstype="xfs" --name=root --vgname=atomicos
+logvol /var/lib/docker --size=3000 --fstype="xfs" --name=docker --vgname=atomicos
 
 # Equivalent of %include fedora-repo.ks
 ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="centos-atomic-host/7/x86_64/standard" --url="http://%(server_ip)s:8000/repo/" --nogpg
@@ -31,11 +31,6 @@ ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="c
 reboot
 
 %post --erroronfail
-
-# For RHEL, it doesn't make sense to have a default remote configuration,
-# because you need to use subscription manager.
-#rm /etc/ostree/remotes.d/*.conf
-#echo 'unconfigured-state=This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.' >> $(ostree admin --print-current-dir).origin
 
 # Anaconda is writing a /etc/resolv.conf from the generating environment.
 # The system should start out with an empty file.
@@ -74,6 +69,33 @@ ln -s /dev/null /etc/udev/rules.d/80-net-setup-link.rules
 # simple eth0 config, again not hard-coded to the build hardware
 cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
 DEVICE="eth0"
+BOOTPROTO="dhcp"
+ONBOOT="yes"
+TYPE="Ethernet"
+PERSISTENT_DHCLIENT="yes"
+EOF
+
+# simple eth1 config, again not hard-coded to the build hardware
+cat > /etc/sysconfig/network-scripts/ifcfg-eth1 << EOF
+DEVICE="eth1"
+BOOTPROTO="dhcp"
+ONBOOT="yes"
+TYPE="Ethernet"
+PERSISTENT_DHCLIENT="yes"
+EOF
+
+# simple eth2 config, again not hard-coded to the build hardware
+cat > /etc/sysconfig/network-scripts/ifcfg-eth2 << EOF
+DEVICE="eth2"
+BOOTPROTO="dhcp"
+ONBOOT="yes"
+TYPE="Ethernet"
+PERSISTENT_DHCLIENT="yes"
+EOF
+
+# simple eth3 config, again not hard-coded to the build hardware
+cat > /etc/sysconfig/network-scripts/ifcfg-eth3 << EOF
+DEVICE="eth3"
 BOOTPROTO="dhcp"
 ONBOOT="yes"
 TYPE="Ethernet"

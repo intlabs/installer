@@ -52,21 +52,26 @@ menu label 0) Boot from local drive
 localboot 0xffff
 
 label 1
-menu label ^34) Deploy CannyOS (ATOMIC) - Anaconda Installer
+menu label Deploy: CannyOS: ^Base
 kernel cannyos/vmlinuz
 append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks net.ifnames=0 biosdevname=0
 
-label 1
+label 2
+menu label Deploy: CannyOS: ^Node
+kernel cannyos/vmlinuz
+append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-node.ks net.ifnames=0 biosdevname=0
+
+label 3
 menu label ^1) Deploy CannyOS (ATOMIC) - Cloud Image
 kernel coreos/coreos_production_pxe.vmlinuz
 append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/cannyos-deploy.sh rootfstype=btrfs coreos.autologin
 
-label 2
+label 4
 menu label ^2) Deploy CentOS (ATOMIC) - Cloud Image
 kernel coreos/coreos_production_pxe.vmlinuz
 append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/fedora-deploy.sh rootfstype=btrfs coreos.autologin
 
-label 3
+label 5
 menu label ^3) Deploy Fedora (ATOMIC) - Cloud Image
 kernel coreos/coreos_production_pxe.vmlinuz
 append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/fedora-deploy.sh rootfstype=btrfs coreos.autologin
