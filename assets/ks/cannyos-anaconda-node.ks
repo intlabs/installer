@@ -1,4 +1,4 @@
-graphical
+text
 lang en_US.UTF-8
 keyboard us
 timezone --utc Etc/UTC
@@ -6,20 +6,24 @@ timezone --utc Etc/UTC
 auth --useshadow --enablemd5
 selinux --enforcing
 rootpw --lock --iscrypted locked
-#user --name=none
+user --name=none
 
 firewall --disabled
 
 bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0"
 
 network --bootproto=dhcp --device=eth0 --activate --onboot=on
-network --bootproto=dhcp --device=eth1 --activate --onboot=on
-network --bootproto=dhcp --device=eth2 --activate --onboot=on
-network --bootproto=dhcp --device=eth3 --activate --onboot=on
-
 services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-final
 # We use NetworkManager, and Avahi doesn't make much sense in the cloud
 services --disabled=network,avahi-daemon
+
+zerombr
+clearpart --all
+
+part /boot --size=300 --fstype="xfs"
+part pv.01 --grow
+volgroup atomicos pv.01
+logvol / --size=3000 --fstype="xfs" --name=root --vgname=atomicos
 
 # Equivalent of %include fedora-repo.ks
 ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="centos-atomic-host/7/x86_64/standard" --url="http://%(server_ip)s:8000/repo/" --nogpg

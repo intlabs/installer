@@ -54,7 +54,7 @@ localboot 0xffff
 label 1
 menu label ^34) Deploy CannyOS (ATOMIC) - Anaconda Installer
 kernel cannyos/vmlinuz
-append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks
+append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks net.ifnames=0 biosdevname=0
 
 label 1
 menu label ^1) Deploy CannyOS (ATOMIC) - Cloud Image
