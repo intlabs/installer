@@ -23,7 +23,7 @@ part /boot --size=300 --fstype="xfs"
 part pv.01 --grow
 volgroup atomicos pv.01
 logvol / --size=3000 --fstype="xfs" --name=root --vgname=atomicos
-logvol /var/lib/docker --size=3000 --fstype="xfs" --name=docker --vgname=atomicos
+#logvol /var/lib/docker --size=3000 --fstype="xfs" --name=docker --vgname=atomicos
 
 # Equivalent of %include fedora-repo.ks
 ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="centos-atomic-host/7/x86_64/standard" --url="http://%(server_ip)s:8000/repo/" --nogpg
