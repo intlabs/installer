@@ -48,11 +48,11 @@ menu separator # insert an empty line
 menu separator # insert an empty line
 
 label 0
-menu label 0) Boot from local drive
+menu label ^Boot: Local Disc
 localboot 0xffff
 
 label 1
-menu label Deploy: CannyOS: ^Base
+menu label ^Deploy: CannyOS: Base
 kernel cannyos/vmlinuz
 append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks net.ifnames=0 biosdevname=0
 

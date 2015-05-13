@@ -22,7 +22,7 @@ services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-f
 services --disabled=network,avahi-daemon
 
 # Equivalent of %include fedora-repo.ks
-ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="centos-atomic-host/7/x86_64/standard" --url="http://%(server_ip)s:8000/repo/" --nogpg
+ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="centos-atomic-host/7/x86_64/standard" --url="http://%(server_ip)s:{{ REPO_PORT }}/repo/" --nogpg
 
 reboot
 
