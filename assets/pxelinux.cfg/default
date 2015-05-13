@@ -1,7 +1,7 @@
 default vesamenu.c32
 prompt 0
 timeout 50
-ontimeout 1
+ontimeout local
 
 
 
@@ -47,91 +47,46 @@ menu tabmsg Press Tab for full configuration options on menu items.
 menu separator # insert an empty line
 menu separator # insert an empty line
 
-label 0
+label local
 menu label ^Boot: Local Disc
 localboot 0xffff
 
-label 1
+label deploy-base
 menu label ^Deploy: CannyOS: Base
 kernel cannyos/vmlinuz
 append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks net.ifnames=0 biosdevname=0
 
-label 2
+label deploy-node
 menu label Deploy: CannyOS: ^Node
 kernel cannyos/vmlinuz
 append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-node.ks net.ifnames=0 biosdevname=0
 
-label 3
-menu label ^1) Deploy CannyOS (ATOMIC) - Cloud Image
-kernel coreos/coreos_production_pxe.vmlinuz
-append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/cannyos-deploy.sh rootfstype=btrfs coreos.autologin
-
-label 4
-menu label ^2) Deploy CentOS (ATOMIC) - Cloud Image
-kernel coreos/coreos_production_pxe.vmlinuz
-append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/fedora-deploy.sh rootfstype=btrfs coreos.autologin
-
-label 5
-menu label ^3) Deploy Fedora (ATOMIC) - Cloud Image
-kernel coreos/coreos_production_pxe.vmlinuz
-append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/fedora-deploy.sh rootfstype=btrfs coreos.autologin
-
-label 4
-menu label ^4) Deploy CentOS (RPM) - Cloud Image
+label deploy-centos-cloud
+menu label Deploy: CentOS: ^Cloud Image
 kernel coreos/coreos_production_pxe.vmlinuz
 append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/centos-deploy-rpm.sh rootfstype=btrfs coreos.autologin
 
-label 5
-menu label ^5) Deploy Fedora (RPM) - Cloud Image
-kernel coreos/coreos_production_pxe.vmlinuz
-append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/fedora-deploy-rpm.sh rootfstype=btrfs coreos.autologin
-
-label 6
-menu label ^6) Install CannyOS (RPM) - From Packages
+label deploy-centos-rpm
+menu label Deploy: CentOS: ^RPM
 kernel centos7/vmlinuz
 append initrd=centos7/initrd.img method=http://mirror.centos.org/centos/7/os/x86_64/ devfs=nomount ip=dhcp net.ifnames=0 biosdevname=0
 
-label 7
-menu label ^7) Install CentOS (RPM) - From Packages
-kernel centos7/vmlinuz
-append initrd=centos7/initrd.img method=http://mirror.centos.org/centos/7/os/x86_64/ devfs=nomount ip=dhcp net.ifnames=0 biosdevname=0
-
-label 8
-menu label ^8) Install Fedora (RPM) - From Packages
-kernel fedora21/vmlinuz
-append initrd=fedora21/initrd.img method=https://dl.fedoraproject.org/pub/fedora/linux/releases/21/Server/x86_64/os/ devfs=nomount ip=dhcp net.ifnames=0 biosdevname=0
-
-label 9
-menu label ^9) Deploy CannyOS Master Node - CentOS 7 x64
-kernel centos7/vmlinuz
-append initrd=centos7/initrd.img ks=http://%(server_ip)s/ks/centos7.ks net.ifnames=0 biosdevname=0
-
-label 10
-menu label ^10) Deploy CoreOS Cluster
+label deploy-coreos
+menu label Deploy: CoreOS Node
 kernel coreos/coreos_production_pxe.vmlinuz
 append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/coreos.sh rootfstype=btrfs coreos.autologin
 
-label 11
-menu label ^11) Run CoreOS ISO in Ramdisk
+label run-coreos
+menu label Run: CoreOS ISO in Ramdisk
 kernel memdisk
 append iso initrd=iso/coreos_production_iso_image.iso raw
 
-label 12
-menu label ^12) Run DBAN and reset node
+label run-dban
+menu label Run: DBAN and ^wipe node
 kernel dban/dban.bzi
 append nuke="dwipe --autonuke --method quick" silent
 
-label 13
-menu label ^13) Install CannyOS Build Node (RPM) - CentOS From Packages
+label deploy-build-node
+menu label Deploy: CannyOS: Build Node
 kernel centos7/vmlinuz
 append initrd=centos7/initrd.img ks=http://%(server_ip)s/ks/cannyos-build-node.ks devfs=nomount ip=dhcp net.ifnames=0 biosdevname=0
-
-#label 2
-#menu label ^2) Install Fedora 22 Atomic x64  
-#kernel fedora-atomic/vmlinuz
-#append fedora-atomic/initrd.img ks=http://%(server_ip)s/ks/fedora-atomic.ks
-
-#label 3
-#menu label ^3) Install CentOS 7 x64 with Local Repo 
-#kernel centos7/vmlinuz
-#append initrd=centos7/initrd.img method=http://%(server_ip)s/centos7/ devfs=nomount ip=dhcp
