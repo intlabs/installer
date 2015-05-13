@@ -7,8 +7,7 @@ auth --useshadow --enablemd5
 selinux --enforcing
 rootpw --lock --iscrypted locked
 #sshkey --username=root "ssh key"
-user --name=cannyos
-
+user --groups=wheel --name=cannyos --password=password --gecos="cannyos"
 firewall --disabled
 
 bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0"
