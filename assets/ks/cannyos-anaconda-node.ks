@@ -6,7 +6,7 @@ timezone --utc Etc/UTC
 auth --useshadow --enablemd5
 selinux --enforcing
 rootpw --lock --iscrypted locked
-user --name=none
+#user --name=none
 
 firewall --disabled
 
@@ -40,7 +40,7 @@ truncate -s 0 /etc/resolv.conf
 # https://bugzilla.redhat.com/show_bug.cgi?id=964299
 passwd -l root
 # remove the user anaconda forces us to make
-userdel -r none
+#userdel -r none
 
 # If you want to remove rsyslog and just use journald, remove this!
 echo -n "Disabling persistent journal"
