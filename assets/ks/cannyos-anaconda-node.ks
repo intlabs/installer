@@ -42,7 +42,14 @@ passwd -l root
 # remove the user anaconda forces us to make
 #userdel -r cannyos
 
-echo "{{ SSH_PUBLIC_KEY }}" >> /home/cannyos/.ssh/authorized_keys
+mkdir -p /home/cannyos/
+cd /home/cannyos/
+mkdir --mode=700 .ssh
+cat >> .ssh/authorized_keys << "PUBLIC_KEY"
+{{ SSH_PUBLIC_KEY }}
+PUBLIC_KEY
+chmod 600 .ssh/authorized_keys
+
 
 # If you want to remove rsyslog and just use journald, remove this!
 echo -n "Disabling persistent journal"
