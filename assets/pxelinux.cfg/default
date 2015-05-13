@@ -8,7 +8,7 @@ ontimeout 1
 menu clear
 menu background splash.png
 menu title CannyOS: Node Boot Menu
-menu vshift 8
+menu vshift 5
 menu rows 18
 menu margin 8
 #menu hidden
