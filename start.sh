@@ -27,7 +27,7 @@ echo "ETCD discovery token: $ETCD_DISCOVERY_TOKEN"
 sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/html/cloudconfig/*
 
 
-/bin/bash
+#/bin/bash
 
 
 
@@ -46,7 +46,7 @@ dnsmasq \
     --dhcp-range=$INTERFACE,$DHCP_START,$DHCP_END,$DHCP_NETMASK \
     --dhcp-option=option:router,$pxe_server_ip \
     --dhcp-boot=pxelinux.0,pxeserver,$pxe_server_ip \
-    --pxe-service=x86PC,"Install CannyOS",pxelinux \
+    --pxe-service=x86PC,"CannyOS: Managed Boot",pxelinux \
     --enable-tftp \
     --tftp-root=/var/lib/tftpboot \
     --user=root \
