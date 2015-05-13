@@ -8,7 +8,6 @@ selinux --enforcing
 rootpw --lock --iscrypted locked
 #sshkey --username=root "ssh key"
 user --name=cannyos
-sshkey --username=cannyos "{{ SSH_PUBLIC_KEY }}"
 
 firewall --disabled
 
@@ -43,6 +42,8 @@ truncate -s 0 /etc/resolv.conf
 passwd -l root
 # remove the user anaconda forces us to make
 #userdel -r cannyos
+
+echo "{{ SSH_PUBLIC_KEY }}" >> /home/cannyos/.ssh/authorized_keys
 
 # If you want to remove rsyslog and just use journald, remove this!
 echo -n "Disabling persistent journal"
