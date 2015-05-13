@@ -16,6 +16,8 @@ nginx
 cat /var/lib/tftpboot/pxelinux.cfg/default
 
 
+sed -i "s/{{ SSH_PUBLIC_KEY }}/$SSH_PUBLIC_KEY/g" /usr/share/nginx/html/ks/*
+
 
 # Update discovery token, bootstrap with 3 nodes
 ETCD_DISCOVERY_TOKEN=$(wget -qO- https:\/\/discovery.etcd.io\/new?size=3)

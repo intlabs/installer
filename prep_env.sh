@@ -26,3 +26,9 @@ firewall-cmd --zone=internal --add-service=dhcp --permanent  	## Port 67
 firewall-cmd --zone=internal --add-port=69/udp --permanent  	## Port for TFTP
 firewall-cmd --zone=internal --add-port=4011/udp --permanent  ## Port for ProxyDHCP
 firewall-cmd --reload  ## Apply rules
+
+
+
+ssh-keygen -t rsa -b 4096 -C "root"
+
+echo $(cat /root/.ssh/id_rsa.pub)

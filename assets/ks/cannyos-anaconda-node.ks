@@ -7,8 +7,8 @@ auth --useshadow --enablemd5
 selinux --enforcing
 rootpw --lock --iscrypted locked
 #sshkey --username=root "ssh key"
-#user --name=cannyos
-#sshkey --username=cannyos "ssh key"
+user --name=cannyos
+sshkey --username=cannyos "{{ SSH_PUBLIC_KEY }}"
 
 firewall --disabled
 
