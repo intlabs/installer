@@ -10,5 +10,5 @@ coreos:
     - name: fleet.service
       command: start
 ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwfkxdgDdDN1nE+bHguqQRbyOtMp0lJlbZRgPELo91c2gieQ6gJUdVLDLZnN9EzuZuEdzgg3K5dZKGYDkA4RSwRBG+QWFHmjzv709fZSx10Myh/E6ZPWFqKPS07L5eAJ1c8GZFHG3ScKam9i8aFmq/hnOImb56OX1kqMK8rn+7kzKbwbl7maOHqd80bCZWSdQzRx9rVFMAxRjfjltgOAxoKrND9cgSMmEXkZvDXJsx2/OHKezJhikq3RRD2yK4rqiTiHA4c/FqPwefpJC3gtWDOhR6NL/P7ahRBvyUKWetJaCgvjMMSTVX6dehGq+NwWmJtXB1GqmA4cnuMI9VIw33
-hostname: coreos-{{ CLIENT_IP_DASH }}
+  - {{ SSH_PUBLIC_KEY }}
+hostname: {{ CLIENT_IP_DASH }}

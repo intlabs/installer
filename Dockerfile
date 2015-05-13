@@ -44,10 +44,10 @@ ADD assets/dban/pxeboot/ $TFTP_BOOT/dban/
 #ADD http://10.0.1.44:8000/installer/lorax/images/pxeboot/vmlinuz $TFTP_BOOT/cannyos/vmlinuz
 
 # Adding coreos kernel and ramdisk
-#ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe.vmlinuz $TFTP_BOOT/coreos/
-#ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe_image.cpio.gz $TFTP_BOOT/coreos/
-#ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2 $HTTP_ROOT/coreos/633.1.0/
-#ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2.sig $HTTP_ROOT/coreos/633.1.0/
+ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe.vmlinuz $TFTP_BOOT/coreos/
+ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe_image.cpio.gz $TFTP_BOOT/coreos/
+ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2 $HTTP_ROOT/coreos/633.1.0/
+ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2.sig $HTTP_ROOT/coreos/633.1.0/
 #ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_iso_image.iso $TFTP_BOOT/iso/coreos_production_iso_image.iso
 
 # Adding Ubuntu Snappy
