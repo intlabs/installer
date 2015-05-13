@@ -49,6 +49,7 @@ cat >> .ssh/authorized_keys << "PUBLIC_KEY"
 {{ SSH_PUBLIC_KEY }}
 PUBLIC_KEY
 chmod 600 .ssh/authorized_keys
+chown -R cannyos /home/cannyos
 
 
 # If you want to remove rsyslog and just use journald, remove this!
