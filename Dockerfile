@@ -38,6 +38,10 @@ ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img $TFTP_
 ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/upgrade.img $TFTP_BOOT/centos7/upgrade.img
 ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz $TFTP_BOOT/centos7/vmlinuz
 
+Adding CannyOS 7 
+ADD http://10.0.1.44:8000/installer/lorax/images/pxeboot/initrd.img $TFTP_BOOT/cannyos/initrd.img
+ADD http://10.0.1.44:8000/installer/lorax/images/pxeboot/upgrade.img $TFTP_BOOT/cannyos/upgrade.img
+ADD http://10.0.1.44:8000/installer/lorax/images/pxeboot/vmlinuz $TFTP_BOOT/cannyos/vmlinuz
 
 # Adding coreos kernel and ramdisk
 ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe.vmlinuz $TFTP_BOOT/coreos/

@@ -52,6 +52,11 @@ menu label 0) Boot from local drive
 localboot 0xffff
 
 label 1
+menu label ^34) Deploy CannyOS (ATOMIC) - Anaconda Installer
+kernel cannyos/vmlinuz
+append initrd=cannyos/initrd.img ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks
+
+label 1
 menu label ^1) Deploy CannyOS (ATOMIC) - Cloud Image
 kernel coreos/coreos_production_pxe.vmlinuz
 append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/cannyos-deploy.sh rootfstype=btrfs coreos.autologin
