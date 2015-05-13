@@ -16,7 +16,9 @@ nginx
 cat /var/lib/tftpboot/pxelinux.cfg/default
 
 
-sed -i "s/{{ SSH_PUBLIC_KEY }}/$SSH_PUBLIC_KEY/g" /usr/share/nginx/html/ks/*
+SSH_PUBLIC_KEY_SAFE=$(echo $SSH_PUBLIC_KEY | sed "s,/,\\\/,g")
+
+sed -i "s/{{ SSH_PUBLIC_KEY }}/$SSH_PUBLIC_KEY_SAFE/g" /usr/share/nginx/html/ks/*
 
 
 # Update discovery token, bootstrap with 3 nodes
