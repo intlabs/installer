@@ -17,10 +17,11 @@ EOF
 echo "CannyOS: Cloud config default settings for testing"
 sudo cat > $CLOUD_CONFIG_TEMP/user-data << EOF
 #cloud-config
-password: fedora
+password: password
 chpasswd: { expire: False }
 ssh_pwauth: True
 lock-passwd: False
+
 EOF
 
 until sudo docker pull cannyos/installer_configdrive; do sleep 2; done
