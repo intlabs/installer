@@ -34,9 +34,9 @@ ADD assets/pxelinux.cfg/default $TFTP_BOOT/pxelinux.cfg/default
 ADD assets/dban/pxeboot/ $TFTP_BOOT/dban/
 
 # Adding centos 7 kernel and ramdisk
-ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img $TFTP_BOOT/centos7/initrd.img
-ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/upgrade.img $TFTP_BOOT/centos7/upgrade.img
-ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz $TFTP_BOOT/centos7/vmlinuz
+#ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img $TFTP_BOOT/centos7/initrd.img
+#ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/upgrade.img $TFTP_BOOT/centos7/upgrade.img
+#ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz $TFTP_BOOT/centos7/vmlinuz
 
 # Adding CannyOS 7 
 #ADD http://10.0.1.44:8000/installer/lorax/images/pxeboot/initrd.img $TFTP_BOOT/cannyos/initrd.img
@@ -50,18 +50,9 @@ ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.
 ADD http://stable.release.core-os.net/amd64-usr/633.1.0/coreos_production_image.bin.bz2.sig $HTTP_ROOT/coreos/633.1.0/
 #ADD http://stable.release.core-os.net/amd64-usr/current/coreos_production_iso_image.iso $TFTP_BOOT/iso/coreos_production_iso_image.iso
 
-# Adding Ubuntu Snappy
-#ADD http://releases.ubuntu.com/15.04/ubuntu-15.04-snappy-amd64+generic.img.xz $HTTP_ROOT/ubuntu-snappy/ubuntu-15.04-snappy-amd64+generic.img.xz
-
 # Adding Fedora 21
 #ADD http://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/fedora/linux/releases/21/Server/x86_64/os/isolinux/vmlinuz $TFTP_BOOT/fedora21/vmlinuz
 #ADD http://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/fedora/linux/releases/21/Server/x86_64/os/isolinux/initrd.img $TFTP_BOOT/fedora21/initrd.img
-
-# Adding Fedora Atomic Host
-#ADD http://download.fedoraproject.org/pub/fedora/linux/releases/test/22_Beta/Cloud/x86_64/Images/Fedora-Cloud-Atomic-22_Beta-20150415.x86_64.raw.xz $HTTP_ROOT/fedora-atomic/fedora-cloud-atomic.x86_64.raw.xz
-
-# Adding Canny Atomic Host
-#ADD https://s3-eu-west-1.amazonaws.com/cannyos-atomic/cannyos-atomic-host/7/images/cannyos-atomic-host-7.raw.xz $HTTP_ROOT/cannyos/cannyos.x86_64.raw.xz
 
 # Adding centos 7 images
 #ADD http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1503.raw.xz $HTTP_ROOT/centos/images/centos.x86_64.raw.xz
