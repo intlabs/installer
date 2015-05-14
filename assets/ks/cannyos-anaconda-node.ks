@@ -263,8 +263,8 @@ After=etcd.service
 TimeoutStartSec=0
 Type=oneshot
 User=root
-ExecStartPre=/bin/bash -c "while ! echo 'CannyOS: ETCD now up' | nc 127.0.0.1 4001; do sleep 1; done"
-ExecStart=/bin/curl -L http://127.0.0.1:4001/v2/keys/atomic01/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
+ExecStartPre=/bin/bash -c "while ! echo 'CannyOS: ETCD now up' | nc 127.0.0.1 2379; do sleep 1; done"
+ExecStart=/bin/curl -L http://127.0.0.1:2379/v2/keys/atomic01/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
 
 [Install]
 WantedBy=multi-user.target
@@ -274,7 +274,7 @@ cat > /etc/sysconfig/flanneld << EOF
 # Flanneld configuration options  
 
 # etcd url location.  Point this to the server where etcd runs
-FLANNEL_ETCD="http://127.0.0.1:4001"
+FLANNEL_ETCD="http://127.0.0.1:2379"
 
 # etcd config key.  This is the configuration key that flannel queries
 # For address range assignment
@@ -293,21 +293,27 @@ Unit=docker.service
 WantedBy=multi-user.target
 EOF
 
+cat > /etc/systemd/system/flanneld-conf.path << EOF
+[Path]
+PathExists=/run/flannel/configured
+Unit=docker.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 mkdir -p /etc/systemd/system/docker.service.d
 cat > /etc/systemd/system/docker.service.d/10-flanneld-network.conf << EOF
 [Unit]
-After=flanneld.service flanneld.path
-Requires=flanneld.service flanneld.path
+After=flanneld.service flanneld.path flanneld-conf.service flanneld-conf.path
+Requires=flanneld.service flanneld.path flanneld-conf.service flanneld-conf.path 
 
 [Service]
 EnvironmentFile=/run/flannel/subnet.env
 ExecStartPre=-/usr/sbin/ip link del docker0
 ExecStart=
-ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OPTIONS \$DOCKER_STORAGE_OPTIONS
+ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OPTIONS \$DOCKER_STORAGE_OPTIONS \$INSECURE_REGISTRY
 EOF
-
-
-
 
 
 
