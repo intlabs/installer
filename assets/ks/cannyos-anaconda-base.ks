@@ -1,6 +1,6 @@
 graphical
-keyboard --vckeymap=us --xlayouts='gb'
 lang en_US.UTF-8
+keyboard us
 timezone Etc/UTC --isUtc --ntpservers=0.centos.pool.ntp.org,1.centos.pool.ntp.org,2.centos.pool.ntp.org,3.centos.pool.ntp.org
 
 auth --useshadow --enablemd5

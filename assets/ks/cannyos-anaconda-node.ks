@@ -1,6 +1,6 @@
 text
-keyboard --vckeymap=us --xlayouts='gb'
 lang en_US.UTF-8
+keyboard us
 timezone Etc/UTC --isUtc --ntpservers=0.centos.pool.ntp.org,1.centos.pool.ntp.org,2.centos.pool.ntp.org,3.centos.pool.ntp.org
 
 auth --useshadow --enablemd5
@@ -500,11 +500,15 @@ echo "--------------------------------------------------------------------------
 
 
 
-curl -L https://github.com/docker/compose/releases/download/1.2.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-PATH=$PATH:/usr/local/bin
-
-
+#cd /root
+#git clone https://github.com/stackforge/kolla.git
+#curl -L https://github.com/docker/compose/releases/download/1.2.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+#chmod +x /usr/local/bin/docker-compose
+#PATH=$PATH:/usr/local/bin
+#cd kolla
+#./tools/genenv
+#setenforce permissive
+#./tools/kolla start
 
 
 
