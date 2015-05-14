@@ -233,6 +233,7 @@ StandardOutput=null
 WorkingDirectory=/var/lib/etcd/
 EnvironmentFile=-/etc/etcd/etcd.conf
 User=etcd
+TimeoutStartSec=0
 ExecStart=/usr/bin/etcd \
   -name \${ETCD_NAME} \
   -initial-advertise-peer-urls \${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
@@ -240,6 +241,7 @@ ExecStart=/usr/bin/etcd \
   -listen-client-urls \${ETCD_LISTEN_CLIENT_URLS} \
   -discovery \${ETCD_DISCOVERY}
 Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
