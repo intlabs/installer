@@ -5,7 +5,8 @@ set -e
 pxe_server_ip=$( ip -f inet -o addr show $INTERFACE | cut -d\  -f 7 | cut -d/ -f 1 )
 
 echo Server IP: $pxe_server_ip
-
+mkdir -p /usr/share/nginx/html/cloudconfig
+touch /usr/share/nginx/html/cloudconfig/test
 #/bin/bash
 mkdir -p $TFTP_BOOT/cannyos
 curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/initrd.img > $TFTP_BOOT/cannyos/initrd.img
