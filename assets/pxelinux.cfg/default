@@ -59,25 +59,10 @@ menu label Deploy: CannyOS: ^Node
 kernel cannyos/vmlinuz
 append initrd=cannyos/initrd.img repo=http://%(server_ip)s:{{ INSTALLER_PORT }}/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-node.ks net.ifnames=0 biosdevname=0
 
-label deploy-fedora-cloud
-menu label Deploy: Fedora: ^Cloud Image
-kernel coreos/coreos_production_pxe.vmlinuz
-append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/fedora-deploy-rpm.sh rootfstype=btrfs coreos.autologin
-
 label deploy-centos-rpm
 menu label Deploy: CentOS: ^RPM
 kernel centos7/vmlinuz
 append initrd=centos7/initrd.img method=http://mirror.centos.org/centos/7/os/x86_64/ devfs=nomount ip=dhcp net.ifnames=0 biosdevname=0
-
-label run-coreos
-menu label Run: CoreOS ISO in Ramdisk
-kernel memdisk
-append iso initrd=iso/coreos_production_iso_image.iso raw
-
-label deploy-coreos
-menu label Deploy: CoreOS Node
-kernel coreos/coreos_production_pxe.vmlinuz
-append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/coreos.sh rootfstype=btrfs coreos.autologin
 
 label run-dban
 menu label Run: DBAN and ^wipe node
