@@ -154,6 +154,8 @@ cat > /etc/hosts << EOF
 EOF
 echo .
 
+echo "$IP_1-$IP_2-$IP_3-$IP_4.cannyos.local" > /etc/hostname
+
 
 # Because memory is scarce resource in most cloud/virt environments,
 # and because this impedes forensics, we are differing from the Fedora
@@ -490,7 +492,8 @@ echo "--------------------------------------------------------------------------
 echo "CannyOS: Cleanup"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
-
+curl -L https://github.com/docker/compose/releases/download/1.2.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
 
 
 
