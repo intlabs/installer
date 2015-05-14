@@ -449,13 +449,17 @@ TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill swarm-agent
 ExecStartPre=-/usr/bin/docker rm swarm-agent
 ExecStartPre=/usr/bin/docker pull swarm
-ExecStart=/usr/bin/docker run -d --name=swarm-agent swarm join --addr=$NODE_IP:2375 token://{{ SWARM_TOKEN }}
+ExecStart=/usr/bin/docker run --name=swarm-agent swarm join --addr=$NODE_IP:2375 token://{{ SWARM_TOKEN }}
 ExecStop=/usr/bin/docker stop swarm-agent
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
+
+
+
+ln -s '/etc/systemd/system/swarm-agent.service' '/etc/systemd/system/multi-user.target.wants/swarm-agent.service'
 
 
 
@@ -476,6 +480,7 @@ ExecStop=/usr/bin/docker stop swarm-manager
 
 [Install]
 WantedBy=multi-user.target
+EOF
 
 
 
