@@ -400,7 +400,8 @@ cat > /etc/sysconfig/docker << EOF
 # /etc/sysconfig/docker
 
 # Modify these options if you want to change the way the docker daemon runs
-OPTIONS='--selinux-enabled --dns 8.8.8.8 -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+#OPTIONS='--selinux-enabled --dns 8.8.8.8 -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+OPTIONS='--dns 8.8.8.8 -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
 DOCKER_CERT_PATH=/etc/docker
 
 # Enable insecure registry communication by appending the registry URL
