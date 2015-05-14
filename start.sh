@@ -16,8 +16,7 @@ curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/vmlinu
 sed -i "s/%(server_ip)s/$pxe_server_ip/g" /var/lib/tftpboot/pxelinux.cfg/default
 sed -i "s/%(server_ip)s/$pxe_server_ip/g" /usr/share/nginx/html/ks/*
 sed -i "s/{{ SERVER_IP }}/$pxe_server_ip/g" /usr/share/nginx/html/cloudconfig/*
-nginx
-cat /var/lib/tftpboot/pxelinux.cfg/default
+
 
 
 
@@ -49,6 +48,10 @@ sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/h
 echo "SWARM discovery token: $SWARM_TOKEN"
 sed -i "s,{{ SWARM_TOKEN }},$SWARM_TOKEN,g" /usr/share/nginx/html/ks/*
 sed -i "s,{{ SWARM_TOKEN }},$SWARM_TOKEN,g" /usr/share/nginx/html/cloudconfig/*
+
+
+nginx
+cat /var/lib/tftpboot/pxelinux.cfg/default
 
 
 pxe_server_ip=$( ip -f inet -o addr show $INTERFACE | cut -d\  -f 7 | cut -d/ -f 1 )
