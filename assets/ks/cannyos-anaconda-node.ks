@@ -136,6 +136,7 @@ ETH3_GATEWAY=127.0.0.1
 ETH3_DNS=127.0.0.1
 
 
+
 cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
 DEVICE="eth0"
 BOOTPROTO="dhcp"
@@ -399,7 +400,7 @@ cat > /etc/sysconfig/docker << EOF
 # /etc/sysconfig/docker
 
 # Modify these options if you want to change the way the docker daemon runs
-OPTIONS='--selinux-enabled -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+OPTIONS='--selinux-enabled --dns 8.8.8.8 -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
 DOCKER_CERT_PATH=/etc/docker
 
 # Enable insecure registry communication by appending the registry URL
@@ -439,15 +440,15 @@ echo "--------------------------------------------------------------------------
 cat > /etc/systemd/system/swarm-agent.service << EOF
 [Unit]
 Description=CannyOS: Swarm Agent Service
-After=docker.service docker-registry-mirror-wait.service
-Requires=docker.service docker-registry-mirror-wait.service
+After=docker.service
+Requires=docker.service
 
 [Service]
 TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill swarm-agent
 ExecStartPre=-/usr/bin/docker rm swarm-agent
 ExecStartPre=/usr/bin/docker pull swarm
-ExecStart=/usr/bin/docker run --name swarm-agent swarm join --addr $NODE_IP:2375 token://{{ SWARM_TOKEN }}
+ExecStart=/usr/bin/docker run -d --name=swarm-agent swarm join --addr=$NODE_IP:2375 token://{{ SWARM_TOKEN }}
 ExecStop=/usr/bin/docker stop swarm-agent
 
 [Install]
@@ -461,23 +462,19 @@ EOF
 cat > /etc/systemd/system/swarm-manager.service << EOF
 [Unit]
 Description=CannyOS: Swarm Manager Service
-After=docker.service docker-registry-mirror-wait.service
-Requires=docker.service docker-registry-mirror-wait.service
+After=docker.service
+Requires=docker.service
 
 [Service]
 TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill swarm-manager
 ExecStartPre=-/usr/bin/docker rm swarm-manager
 ExecStartPre=/usr/bin/docker pull swarm
-ExecStart=/usr/bin/docker run --name swarm-manager -p 2376:2375 swarm manage -H tcp://0.0.0.0:2375 token://{{ SWARM_TOKEN }}
+ExecStart=/usr/bin/docker run --name swarm-manager -p 2376:2375 swarm manage token://{{ SWARM_TOKEN }}
 ExecStop=/usr/bin/docker stop swarm-manager
 
 [Install]
 WantedBy=multi-user.target
-
-
-
-
 
 
 
