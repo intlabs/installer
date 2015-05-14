@@ -42,7 +42,8 @@ ADD http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz $TFTP_BOO
 ADD assets/ks/ $HTTP_ROOT/ks/
 
 # Adding cloudconfig
-ADD assets/cloudconfig/ $HTTP_ROOT/cloudconfig/
+#ADD assets/cloudconfig/ $HTTP_ROOT/cloudconfig/
+RUN mkdir -p $HTTP_ROOT/cloudconfig
 
 RUN find $TFTP_BOOT -type d -exec chmod 755 {} \; && \
     find $TFTP_BOOT -type f -exec chmod 755 {} \; && \
