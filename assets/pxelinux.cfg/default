@@ -59,10 +59,10 @@ menu label Deploy: CannyOS: ^Node
 kernel cannyos/vmlinuz
 append initrd=cannyos/initrd.img repo=http://%(server_ip)s:{{ INSTALLER_PORT }}/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-node.ks net.ifnames=0 biosdevname=0
 
-label deploy-centos-cloud
-menu label Deploy: CentOS: ^Cloud Image
+label deploy-fedora-cloud
+menu label Deploy: Fedora: ^Cloud Image
 kernel coreos/coreos_production_pxe.vmlinuz
-append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/centos-deploy-rpm.sh rootfstype=btrfs coreos.autologin
+append initrd=coreos/coreos_production_pxe_image.cpio.gz cloud-config-url=http://%(server_ip)s/cloudconfig/fedora-deploy-rpm.sh rootfstype=btrfs coreos.autologin
 
 label deploy-centos-rpm
 menu label Deploy: CentOS: ^RPM
