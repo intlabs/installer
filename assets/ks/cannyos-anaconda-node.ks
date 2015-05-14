@@ -199,7 +199,7 @@ ETCD_INITIAL_ADVERTISE_PEER_URLS="http://$NODE_IP:2380,http://$NODE_IP:7001"
 #ETCD_INITIAL_CLUSTER="default=http://localhost:2380,default=http://localhost:7001"
 #ETCD_INITIAL_CLUSTER_STATE="new"
 #ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
-#ETCD_ADVERTISE_CLIENT_URLS="http://localhost:2379,http://localhost:4001"
+ETCD_ADVERTISE_CLIENT_URLS="http://$NODE_IP:4001"
 ETCD_DISCOVERY="{{ ETCD_DISCOVERY_TOKEN }}"
 #ETCD_DISCOVERY_SRV=""
 #ETCD_DISCOVERY_FALLBACK="proxy"
@@ -309,7 +309,7 @@ FLANNEL_ETCD="http://127.0.0.1:2379"
 FLANNEL_ETCD_KEY="/atomic01/network"
 
 # Any additional options that you want to pass
-#FLANNEL_OPTIONS=""
+#FLANNEL_OPTIONS="-iface=\"eth0\""
 EOF
 
 
@@ -383,9 +383,112 @@ EOF
 
 
 
+
+
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Docker configuration"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+
+
+
+
+cat > /etc/sysconfig/docker << EOF
+# /etc/sysconfig/docker
+
+# Modify these options if you want to change the way the docker daemon runs
+OPTIONS='--selinux-enabled -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+DOCKER_CERT_PATH=/etc/docker
+
+# Enable insecure registry communication by appending the registry URL
+# to the INSECURE_REGISTRY variable below and uncommenting it
+# INSECURE_REGISTRY='--insecure-registry '
+
+# On SELinux System, if you remove the --selinux-enabled option, you
+# also need to turn on the docker_transition_unconfined boolean.
+# setsebool -P docker_transition_unconfined
+
+# Location used for temporary files, such as those created by
+# docker load and build operations. Default is /var/lib/docker/tmp
+# Can be overriden by setting the following environment variable.
+# DOCKER_TMPDIR=/var/tmp
+
+# Controls the /etc/cron.daily/docker-logrotate cron job status.
+# To disable, uncomment the line below.
+# LOGROTATE=false
+EOF
+
+
+
+
+
+
+
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Docker Swarm"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+
+
+
+
+cat > /etc/systemd/system/swarm-agent.service << EOF
+[Unit]
+Description=CannyOS: Swarm Agent Service
+After=docker.service docker-registry-mirror-wait.service
+Requires=docker.service docker-registry-mirror-wait.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill swarm-agent
+ExecStartPre=-/usr/bin/docker rm swarm-agent
+ExecStartPre=/usr/bin/docker pull swarm
+ExecStart=/usr/bin/docker run --name swarm-agent swarm join --addr $NODE_IP:2375 token://{{ SWARM_TOKEN }}
+ExecStop=/usr/bin/docker stop swarm-agent
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+
+
+cat > /etc/systemd/system/swarm-manager.service << EOF
+[Unit]
+Description=CannyOS: Swarm Manager Service
+After=docker.service docker-registry-mirror-wait.service
+Requires=docker.service docker-registry-mirror-wait.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill swarm-manager
+ExecStartPre=-/usr/bin/docker rm swarm-manager
+ExecStartPre=/usr/bin/docker pull swarm
+ExecStart=/usr/bin/docker run --name swarm-manager -p 2376:2375 swarm manage -H tcp://0.0.0.0:2375 token://{{ SWARM_TOKEN }}
+ExecStop=/usr/bin/docker stop swarm-manager
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+
+
+
+
+
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: Cleanup"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+
+
 
 
 echo "Removing random-seed so it's not the same in every image."

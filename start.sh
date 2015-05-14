@@ -46,6 +46,10 @@ sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/h
 sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/html/cloudconfig/*
 
 
+echo "SWARM discovery token: $SWARM_TOKEN"
+sed -i "s,{{ SWARM_TOKEN }},$SWARM_TOKEN,g" /usr/share/nginx/html/ks/*
+sed -i "s,{{ SWARM_TOKEN }},$SWARM_TOKEN,g" /usr/share/nginx/html/cloudconfig/*
+
 
 pxe_server_ip=$( ip -f inet -o addr show $INTERFACE | cut -d\  -f 7 | cut -d/ -f 1 )
 
