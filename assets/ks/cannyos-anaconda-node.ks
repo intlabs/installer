@@ -175,6 +175,10 @@ echo "--------------------------------------------------------------------------
 echo "CannyOS: ETCD configuration"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
+
+
+
+
 export NODE_IP=$ETH0_IP
 cat > /etc/etcd/etcd.conf << EOF
 # [member]
@@ -214,6 +218,9 @@ ETCD_DISCOVERY="{{ ETCD_DISCOVERY_TOKEN }}"
 EOF
 
 
+
+
+
 cat > /etc/systemd/system/etcd.service << EOF
 [Unit]
 Description=Etcd Server
@@ -250,6 +257,10 @@ echo "--------------------------------------------------------------------------
 echo "CannyOS: Flanneld networking configuration"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
+
+
+
+
 cat > /etc/sysconfig/flanneld-conf.json << EOF
 {
   "Network": "10.96.0.0/12",
@@ -259,6 +270,10 @@ cat > /etc/sysconfig/flanneld-conf.json << EOF
   }
 }
 EOF
+
+
+
+
 
 cat > /etc/systemd/system/flanneld-conf.service << EOF
 [Unit]
@@ -277,6 +292,10 @@ ExecStart=/bin/curl -L http://127.0.0.1:2379/v2/keys/atomic01/network/config -XP
 WantedBy=multi-user.target
 EOF
 
+
+
+
+
 cat > /etc/sysconfig/flanneld << EOF
 # Flanneld configuration options  
 
@@ -291,6 +310,10 @@ FLANNEL_ETCD_KEY="/atomic01/network"
 #FLANNEL_OPTIONS=""
 EOF
 
+
+
+
+
 cat > /etc/systemd/system/flanneld.path << EOF
 [Path]
 PathExists=/run/flannel/subnet.env
@@ -299,6 +322,10 @@ Unit=docker.service
 [Install]
 WantedBy=multi-user.target
 EOF
+
+
+
+
 
 cat > /etc/systemd/system/flanneld-conf.path << EOF
 [Path]
@@ -309,19 +336,46 @@ Unit=docker.service
 WantedBy=multi-user.target
 EOF
 
+
+
+
+
 mkdir -p /etc/systemd/system/docker.service.d
 cat > /etc/systemd/system/docker.service.d/10-flanneld-network.conf << EOF
 [Unit]
-After=flanneld.service flanneld.path flanneld-conf.service flanneld-conf.path
-Requires=flanneld.service flanneld.path flanneld-conf.service flanneld-conf.path 
+After=flanneld.service flanneld.path
+Requires=flanneld.service flanneld.path 
 
 [Service]
+TimeoutStartSec=0
 EnvironmentFile=/run/flannel/subnet.env
 ExecStartPre=-/usr/sbin/ip link del docker0
 ExecStart=
 ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OPTIONS \$DOCKER_STORAGE_OPTIONS \$INSECURE_REGISTRY
 EOF
 
+
+
+
+
+cat > /usr/lib/systemd/system/flanneld.service << EOF
+[Unit]
+Description=Flanneld overlay address etcd agent
+After=network.target flanneld-conf.service flanneld-conf.path
+Before=docker.service
+Requires=flanneld-conf.service flanneld-conf.path
+
+[Service]
+TimeoutStartSec=0
+Type=notify
+EnvironmentFile=/etc/sysconfig/flanneld
+EnvironmentFile=-/etc/sysconfig/docker-network
+ExecStart=/usr/bin/flanneld -etcd-endpoints=\${FLANNEL_ETCD} -etcd-prefix=\${FLANNEL_ETCD_KEY} \$FLANNEL_OPTIONS
+ExecStartPost=/usr/libexec/flannel/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
+
+[Install]
+RequiredBy=docker.service
+EOF
 
 
 
