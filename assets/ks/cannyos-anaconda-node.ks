@@ -258,6 +258,7 @@ cat > /etc/systemd/system/flanneld-conf.service << EOF
 [Unit]
 Description=CannyOS: Flanneld Configuration
 After=etcd.service
+Requires=etcd.service
 
 [Service]
 TimeoutStartSec=0
