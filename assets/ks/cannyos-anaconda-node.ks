@@ -22,7 +22,7 @@ clearpart --all
 part /boot --size=300 --fstype="xfs"
 part pv.01 --grow
 volgroup atomicos pv.01
-logvol / --size=3000 --fstype="xfs" --name=root --vgname=atomicos
+logvol / --size=3000 --grow --fstype="xfs" --name=root --vgname=atomicos
 #logvol /var/lib/docker --size=3000 --fstype="xfs" --name=docker --vgname=atomicos
 
 # Equivalent of %include fedora-repo.ks
@@ -500,6 +500,9 @@ echo "--------------------------------------------------------------------------
 
 
 
+curl -L https://github.com/docker/compose/releases/download/1.2.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+PATH=$PATH:/usr/local/bin
 
 
 
