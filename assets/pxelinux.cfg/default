@@ -52,12 +52,12 @@ localboot 0xffff
 label deploy-base
 menu label ^Deploy: CannyOS: Base
 kernel cannyos/vmlinuz
-append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks net.ifnames=0 biosdevname=0
+append initrd=cannyos/initrd.img repo=http://%(server_ip)s:{{ REPO_PORT }}/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-base.ks net.ifnames=0 biosdevname=0
 
 label deploy-node
 menu label Deploy: CannyOS: ^Node
 kernel cannyos/vmlinuz
-append initrd=cannyos/initrd.img repo=http://%(server_ip)s:8000/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-node.ks net.ifnames=0 biosdevname=0
+append initrd=cannyos/initrd.img repo=http://%(server_ip)s:{{ REPO_PORT }}/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-node.ks net.ifnames=0 biosdevname=0
 
 label deploy-centos-cloud
 menu label Deploy: CentOS: ^Cloud Image
