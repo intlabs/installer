@@ -32,9 +32,38 @@ reboot
 
 %post --erroronfail
 
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Bugfixes"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
 # Anaconda is writing a /etc/resolv.conf from the generating environment.
 # The system should start out with an empty file.
 truncate -s 0 /etc/resolv.conf
+
+# If you want to remove rsyslog and just use journald, remove this!
+echo -n "Disabling persistent journal"
+rmdir /var/log/journal/ 
+echo . 
+
+echo -n "Getty fixes"
+# although we want console output going to the serial console, we don't
+# actually have the opportunity to login there. FIX.
+# we don't really need to auto-spawn _any_ gettys.
+sed -i '/^#NAutoVTs=.*/ a\
+NAutoVTs=0' /etc/systemd/logind.conf
+
+
+
+
+
+
+
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: User Configuration"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 # older versions of livecd-tools do not follow "rootpw --lock" line above
 # https://bugzilla.redhat.com/show_bug.cgi?id=964299
@@ -52,17 +81,16 @@ chmod 600 .ssh/authorized_keys
 chown -R cannyos /home/cannyos
 
 
-# If you want to remove rsyslog and just use journald, remove this!
-echo -n "Disabling persistent journal"
-rmdir /var/log/journal/ 
-echo . 
 
-echo -n "Getty fixes"
-# although we want console output going to the serial console, we don't
-# actually have the opportunity to login there. FIX.
-# we don't really need to auto-spawn _any_ gettys.
-sed -i '/^#NAutoVTs=.*/ a\
-NAutoVTs=0' /etc/systemd/logind.conf
+
+
+
+
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Network Configuration"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 echo -n "Network fixes"
 # initscripts don't like this file to be missing.
@@ -137,6 +165,10 @@ echo "RUN_FIRSTBOOT=NO" > /etc/sysconfig/firstboot
 
 
 
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: ETCD configuration"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
 export NODE_IP=$ETH0_IP
 cat > /etc/etcd/etcd.conf << EOF
 # [member]
@@ -146,7 +178,7 @@ ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
 #ETCD_HEARTBEAT_INTERVAL="100"
 #ETCD_ELECTION_TIMEOUT="1000"
 ETCD_LISTEN_PEER_URLS="http://$NODE_IP:2380,http://$NODE_IP:7001"
-ETCD_LISTEN_CLIENT_URLS="http://$NODE_IP:4001"
+ETCD_LISTEN_CLIENT_URLS="http://127.0.0.1:2379,http://$NODE_IP:4001"
 #ETCD_MAX_SNAPSHOTS="5"
 #ETCD_MAX_WALS="5"
 #ETCD_CORS=""
@@ -208,6 +240,71 @@ EOF
 
 
 
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Flanneld networking configuration"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+cat > /etc/sysconfig/flanneld-conf.json << EOF
+{
+  "Network": "10.96.0.0/12",
+  "SubnetLen": 24,
+  "Backend": {
+    "Type": "vxlan"
+  }
+}
+EOF
+
+cat > /etc/systemd/system/flanneld-conf.service << EOF
+[Unit]
+Description=CannyOS: Flanneld Configuration
+After=etcd.service
+
+[Service]
+TimeoutStartSec=0
+Type=oneshot
+User=root
+ExecStartPre=/bin/bash -c "while ! echo 'CannyOS: ETCD now up' | nc 127.0.0.1 4001; do sleep 1; done"
+ExecStart=/bin/curl -L http://127.0.0.1:4001/v2/keys/atomic01/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > /etc/sysconfig/flanneld << EOF
+# Flanneld configuration options  
+
+# etcd url location.  Point this to the server where etcd runs
+FLANNEL_ETCD="http://127.0.0.1:4001"
+
+# etcd config key.  This is the configuration key that flannel queries
+# For address range assignment
+FLANNEL_ETCD_KEY="/atomic01/network"
+
+# Any additional options that you want to pass
+#FLANNEL_OPTIONS=""
+EOF
+
+cat > /etc/systemd/system/flanneld.path << EOF
+[Path]
+PathExists=/run/flannel/subnet.env
+Unit=docker.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+mkdir -p /etc/systemd/system/docker.service.d
+cat > /etc/systemd/system/docker.service.d/10-flanneld-network.conf << EOF
+[Unit]
+After=flanneld.service flanneld.path
+Requires=flanneld.service flanneld.path
+
+[Service]
+EnvironmentFile=/run/flannel/subnet.env
+ExecStartPre=-/usr/sbin/ip link del docker0
+ExecStart=
+ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OPTIONS \$DOCKER_STORAGE_OPTIONS
+EOF
 
 
 
@@ -217,11 +314,9 @@ EOF
 
 
 
-
-
-
-
-
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Cleanup"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 
 echo "Removing random-seed so it's not the same in every image."
