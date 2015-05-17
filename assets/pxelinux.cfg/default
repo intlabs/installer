@@ -59,6 +59,11 @@ menu label Deploy: CannyOS: ^Node
 kernel cannyos/vmlinuz
 append initrd=cannyos/initrd.img repo=http://%(server_ip)s:{{ INSTALLER_PORT }}/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-node.ks net.ifnames=0 biosdevname=0
 
+label deploy-master
+menu label Deploy: CannyOS: ^Master Node
+kernel cannyos/vmlinuz
+append initrd=cannyos/initrd.img repo=http://%(server_ip)s:{{ INSTALLER_PORT }}/installer/lorax/ ks=http://%(server_ip)s/ks/cannyos-anaconda-master.ks net.ifnames=0 biosdevname=0
+
 label deploy-centos-rpm
 menu label Deploy: CentOS: ^RPM
 kernel centos7/vmlinuz
