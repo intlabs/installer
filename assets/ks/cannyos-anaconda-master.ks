@@ -1,4 +1,4 @@
-text
+graphical
 lang en_US.UTF-8
 keyboard us
 timezone Etc/UTC --isUtc --ntpservers=0.centos.pool.ntp.org,1.centos.pool.ntp.org,2.centos.pool.ntp.org,3.centos.pool.ntp.org
@@ -17,12 +17,12 @@ services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-f
 # We use NetworkManager, and Avahi doesn't make much sense in the cloud
 services --disabled=network,avahi-daemon
 
-zerombr
-clearpart --all
-part /boot --size=300 --fstype="xfs"
-part pv.01 --grow
-volgroup atomicos pv.01
-logvol / --size=3000 --grow --fstype="xfs" --name=root --vgname=atomicos
+#zerombr
+#clearpart --all
+#part /boot --size=300 --fstype="xfs"
+#part pv.01 --grow
+#volgroup atomicos pv.01
+#logvol / --size=3000 --grow --fstype="xfs" --name=root --vgname=atomicos
 #logvol /var/lib/docker --size=3000 --fstype="xfs" --name=docker --vgname=atomicos
 
 # Equivalent of %include fedora-repo.ks
@@ -239,7 +239,6 @@ ExecStop=/usr/bin/docker run --rm \
 WantedBy=multi-user.target
 EOF
 
-systemctl enable canny-openstack-aio.service
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: SE Linux"
