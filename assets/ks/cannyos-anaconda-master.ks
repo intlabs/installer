@@ -75,8 +75,8 @@ echo "--------------------------------------------------------------------------
 # older versions of livecd-tools do not follow "rootpw --lock" line above
 # https://bugzilla.redhat.com/show_bug.cgi?id=964299
 passwd -l root
-# remove the user anaconda forces us to make
-#userdel -r cannyos
+
+userdel -r centos
 
 mkdir -p /home/cannyos/
 cd /home/cannyos/
