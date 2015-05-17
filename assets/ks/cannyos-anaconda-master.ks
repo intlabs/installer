@@ -219,11 +219,16 @@ ExecStartPre=/usr/bin/docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /root/canny:/root/canny \
     cannyos/openstack-manager pull
-ExecStart=/usr/bin/docker run --rm \
+ExecStartPre=/usr/bin/docker run --rm \
     --net=host \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /root/canny:/root/canny \
     cannyos/openstack-manager start
+ExecStart=/usr/bin/docker run --rm \
+    --net=host \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /root/canny:/root/canny \
+    cannyos/openstack-manager status
 ExecStop=/usr/bin/docker run --rm \
     --net=host \
     -v /var/run/docker.sock:/var/run/docker.sock \
