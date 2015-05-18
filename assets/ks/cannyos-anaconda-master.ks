@@ -481,7 +481,7 @@ EOF
 echo "--------------------------------------------------------------"
 echo "CannyOS: DNS Container Discovery Service: Enable"
 echo "--------------------------------------------------------------"
-systemctl enable cannyos-dns-discovery
+#systemctl enable cannyos-dns-discovery
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -542,7 +542,7 @@ cat > /var/usrlocal/bin/cannyos-ipa-server-config << EOF
 #!/bin/bash
 # Inform the service monitor that we are initialising
 IPA_STATUS="init"
-etcdctl mk /cannyos/config/ipa/status \$IPA_STATUS || etcdctl update /cannyos/config/ipa/status \$IPA_STATUS
+etcdctl set /cannyos/config/ipa/status \$IPA_STATUS
 
 # Launch the freeipa server
 docker run -d \
@@ -551,8 +551,9 @@ docker run -d \
     -p 443:443 \
     -p 88:88/tcp \
     -p 88:88/udp \
+    -p 389:389/tcp \
     -p 464:464/udp \
-    -p 464:464/udp \
+    -p 464:464/tcp \
     -e IPA_SERVER_IP=$IPA_SERVER_IP \
     -e PASSWORD=$IPA_PASSWORD \
     --dns $DNS_NAMESERVER \
@@ -567,9 +568,9 @@ IPA_HOSTNAME=\$(docker inspect --format='{{.Config.Hostname}}' $IPA_SERVER_NAME)
 IPA_IP=\$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $IPA_SERVER_NAME )
 
 # Wait for DNS Resolution to start working
-DNS_RESPONSE=\$(dig @\$IPA_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
-while [ "\$DNS_RESPONSE" != "\$IPA_IP" ]; do
-  DNS_RESPONSE=\$(dig @\$IPA_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
+DNS_RESPONSE=\$(dig @\$IPA_SERVER_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
+while [ "\$DNS_RESPONSE" != "\$IPA_SERVER_IP" ]; do
+  DNS_RESPONSE=\$(dig @\$IPA_SERVER_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
   sleep 1s
 done
 
