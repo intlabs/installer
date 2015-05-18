@@ -35,7 +35,6 @@ url --url="http://mirror.centos.org/centos/7/os/x86_64/"
 
 %post --erroronfail
 
-setenforce 0
 
 cat > /etc/sysconfig/selinux << EOF
 # This file controls the state of SELinux on the system.
@@ -86,46 +85,30 @@ yum install -y cockpit
 
 echo "CannyOS: Installing requirements"
 
-# Remove network manager
-systemctl stop network && \
-systemctl stop NetworkManager && \
-systemctl disable NetworkManager && \
-systemctl start network && \
-systemctl enable network && \
-systemctl status network
 
 echo "Cannyos: Making life easier by dropping the firewall"
 systemctl stop firewalld
 systemctl disable firewalld
-systemctl status firewalld
 
 echo "Cannyos: starting docker service"
-systemctl stop docker.service
 systemctl enable docker.service
-systemctl start docker.service
-systemctl status docker.service
 
-echo "CannyOS: starting cockpit service"
-systemctl stop cockpit.service
-systemctl start cockpit.service
-systemctl enable cockpit.service
-systemctl status cockpit.service
 
 # Start NTP
 systemctl start ntpd
 systemctl enable ntpd
+systemctl status ntpd
 
 
 # Remove network manager
-systemctl stop network && \
-systemctl stop NetworkManager && \
-systemctl disable NetworkManager && \
-systemctl start network && \
-systemctl enable network && \
-systemctl status network
+systemctl mask NetworkManager
+systemctl enable network
+
+echo "CannyOS: starting cockpit service"
+systemctl enable cockpit.socket
 
 # Add vxlan kernel module for Neutron
-modprobe vxlan
+#modprobe vxlan
 
 
 # Pull the openstack repo
