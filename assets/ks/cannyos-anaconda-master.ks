@@ -217,12 +217,16 @@ echo "--------------------------------------------------------------------------
 
 
 # Device that skydns is active on: this should NOT be public in production
+
 SKYDNS_DEV=eth0
 SKYDNS_IP=$(ip -f inet -o addr show $SKYDNS_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 
-
 cat > /var/usrlocal/bin/skydns-host-management << EOF
 #!/bin/bash
+
+while ! echo 'CannyOS ETCD: now up' | etcdctl member list ; do sleep 1; done
+
+
 # Configure the host to use skydns
 cp -f /etc/resolv.conf /etc/resolv.conf.pre-skydns
 sed -i '/Managed by CannyOS/d' /etc/resolv.conf
@@ -250,6 +254,187 @@ EOF
 
 # enable skydns
 systemctl enable skydns.service
+
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Flanneld networking configuration"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+
+
+
+
+cat > /etc/sysconfig/flanneld-conf.json << EOF
+{
+  "Network": "10.96.0.0/12",
+  "SubnetLen": 24,
+  "Backend": {
+    "Type": "vxlan"
+  }
+}
+EOF
+
+
+
+
+
+cat > /etc/systemd/system/flanneld-conf.service << EOF
+[Unit]
+Description=CannyOS: Flanneld Configuration
+After=etcd.service
+Requires=etcd.service
+
+[Service]
+TimeoutStartSec=0
+Type=oneshot
+User=root
+ExecStartPre=/bin/bash -c "while ! echo 'CannyOS: ETCD now up' | nc 127.0.0.1 2379; do sleep 1; done"
+ExecStart=/bin/curl -L http://127.0.0.1:2379/v2/keys/atomic01/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+
+
+cat > /etc/sysconfig/flanneld << EOF
+# Flanneld configuration options  
+
+# etcd url location.  Point this to the server where etcd runs
+FLANNEL_ETCD="http://127.0.0.1:2379"
+
+# etcd config key.  This is the configuration key that flannel queries
+# For address range assignment
+FLANNEL_ETCD_KEY="/atomic01/network"
+
+# Any additional options that you want to pass
+#FLANNEL_OPTIONS="-iface=\"eth0\""
+EOF
+
+
+
+
+
+cat > /etc/systemd/system/flanneld.path << EOF
+[Path]
+PathExists=/run/flannel/subnet.env
+Unit=docker.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+
+
+cat > /etc/systemd/system/flanneld-conf.path << EOF
+[Path]
+PathExists=/run/flannel/configured
+Unit=docker.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+
+
+mkdir -p /etc/systemd/system/docker.service.d
+cat > /etc/systemd/system/docker.service.d/10-flanneld-network.conf << EOF
+[Unit]
+After=flanneld.service flanneld.path
+Requires=flanneld.service flanneld.path 
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/run/flannel/subnet.env
+ExecStartPre=-/usr/sbin/ip link del docker0
+ExecStart=
+ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OPTIONS \$DOCKER_STORAGE_OPTIONS \$INSECURE_REGISTRY
+EOF
+
+
+
+
+
+cat > /usr/lib/systemd/system/flanneld.service << EOF
+[Unit]
+Description=Flanneld overlay address etcd agent
+After=network.target flanneld-conf.service flanneld-conf.path
+Before=docker.service
+Requires=flanneld-conf.service flanneld-conf.path
+
+[Service]
+TimeoutStartSec=0
+Type=notify
+EnvironmentFile=/etc/sysconfig/flanneld
+EnvironmentFile=-/etc/sysconfig/docker-network
+ExecStart=/usr/bin/flanneld -etcd-endpoints=\${FLANNEL_ETCD} -etcd-prefix=\${FLANNEL_ETCD_KEY} \$FLANNEL_OPTIONS
+ExecStartPost=/usr/libexec/flannel/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
+
+[Install]
+RequiredBy=docker.service
+EOF
+
+
+
+
+
+
+
+
+
+
+
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Docker configuration"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+
+
+
+
+cat > /etc/sysconfig/docker << EOF
+# /etc/sysconfig/docker
+
+# Modify these options if you want to change the way the docker daemon runs
+#OPTIONS='--selinux-enabled --dns 8.8.8.8 -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+OPTIONS='--dns $SKYDNS_IP -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+DOCKER_CERT_PATH=/etc/docker
+
+# Enable insecure registry communication by appending the registry URL
+# to the INSECURE_REGISTRY variable below and uncommenting it
+# INSECURE_REGISTRY='--insecure-registry '
+
+# On SELinux System, if you remove the --selinux-enabled option, you
+# also need to turn on the docker_transition_unconfined boolean.
+# setsebool -P docker_transition_unconfined
+
+# Location used for temporary files, such as those created by
+# docker load and build operations. Default is /var/lib/docker/tmp
+# Can be overriden by setting the following environment variable.
+# DOCKER_TMPDIR=/var/tmp
+
+# Controls the /etc/cron.daily/docker-logrotate cron job status.
+# To disable, uncomment the line below.
+# LOGROTATE=false
+EOF
+
+
+
+
+
+
+
+
+
 
 
 
