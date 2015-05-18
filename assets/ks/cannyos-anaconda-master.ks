@@ -11,7 +11,9 @@ user --groups=wheel --name=cannyos --password=password --gecos="cannyos"
 firewall --disabled
 
 bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0"
-network --bootproto=dhcp --device=eth0 --activate --onboot=on
+network  --bootproto=dhcp --device=eth0 --ipv6=auto --activate --onboot=on
+network  --bootproto=none --device=eth1 --activate
+network  --bootproto=none --device=eth2 --activate
 
 services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-final
 # We use NetworkManager, and Avahi doesn't make much sense in the cloud
@@ -199,6 +201,57 @@ echo "--------------------------------------------------------------------------
 # enable cockpit
 systemctl start cockpit.service
 systemctl enable cockpit.socket
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: ETCD"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+# enable etcd
+systemctl enable etcd.service
+
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: SkyDNS"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+
+# Device that skydns is active on: this should NOT be public in production
+SKYDNS_DEV=eth0
+SKYDNS_IP=$(ip -f inet -o addr show $SKYDNS_DEV | cut -d\  -f 7 | cut -d/ -f 1)
+
+
+cat > /var/usrlocal/bin/skydns-host-management << EOF
+#!/bin/bash
+# Configure the host to use skydns
+cp -f /etc/resolv.conf /etc/resolv.conf.pre-skydns
+sed -i '/Managed by CannyOS/d' /etc/resolv.conf
+sed -i '/nameserver/d' /etc/resolv.conf
+echo "# Managed by CannyOS: skydns" >> /etc/resolv.conf
+echo "nameserver $SKYDNS_IP" >> /etc/resolv.conf
+EOF
+chmod +x /var/usrlocal/bin/skydns-host-management
+
+
+cat > /etc/systemd/system/skydns.service << EOF
+[Unit]
+Description=CannyOS: Skydns Server
+After=etcd.service
+Requires=etcd.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=/var/usrlocal/bin/skydns-host-management
+ExecStart=/bin/skydns -addr=$SKYDNS_IP:53 -machines=http://127.0.0.1:4001 -nameservers=8.8.8.8:53
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# enable skydns
+systemctl enable skydns.service
+
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
