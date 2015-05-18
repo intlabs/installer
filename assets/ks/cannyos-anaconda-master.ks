@@ -470,7 +470,6 @@ cat > /etc/systemd/system/cannyos-ipa-server.service << EOF
 [Unit]
 Description=CannyOS: IPA Server Service
 Documentation=http://git.cannycomputing.com/IPA/freeipa/wikis/home
-Before=skydns.service
 After=docker.service etcd.service
 Requires=docker.service etcd.service
 
