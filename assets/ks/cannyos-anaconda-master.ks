@@ -10,7 +10,7 @@ rootpw --lock --iscrypted locked
 user --groups=wheel --name=cannyos --password=password --gecos="cannyos"
 firewall --disabled
 
-bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0" --location=mbr --boot-drive=sda
+bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0"
 network  --bootproto=dhcp --device=eth0 --ipv6=auto --activate --onboot=on
 
 services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-final
