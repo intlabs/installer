@@ -386,10 +386,6 @@ EOF
 
 
 
-ifdown eth0:0; ifdown eth0; ifup eth0
-
-
-
 
 
 
