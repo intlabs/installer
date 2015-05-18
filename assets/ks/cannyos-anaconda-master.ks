@@ -270,8 +270,8 @@ cat > /etc/sysconfig/flanneld-conf.json << EOF
   "Network": "10.96.0.0/12",
   "SubnetLen": 24,
   "Backend": {
-    "Type": "vxlan"
-    "VNI": 2000,
+    "Type": "vxlan",
+    "VNI": 2000
   }
 }
 EOF
@@ -381,7 +381,6 @@ ExecStartPost=/usr/libexec/flannel/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -
 [Install]
 RequiredBy=docker.service
 EOF
-
 
 
 
