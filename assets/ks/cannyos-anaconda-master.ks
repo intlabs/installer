@@ -401,15 +401,13 @@ ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OP
 EOF
 
 
-
-
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
-echo "CannyOS: Docker configuration"
+echo "CannyOS: Docker"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
-
-
-
+echo "--------------------------------------------------------------"
+echo "CannyOS: Docker: Config"
+echo "--------------------------------------------------------------"
 
 cat > /etc/sysconfig/docker << EOF
 # /etc/sysconfig/docker
@@ -438,24 +436,27 @@ DOCKER_CERT_PATH=/etc/docker
 EOF
 
 
-
-
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: DNS Container Discovery Service"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 
-
+echo "--------------------------------------------------------------"
+echo "CannyOS: DNS Container Discovery Service: Config"
+echo "--------------------------------------------------------------"
 HOST_DEV=eth0
 HOST_IP=$(ip -f inet -o addr show $HOST_DEV | cut -d\  -f 7 | cut -d/ -f 1)
-echo $HOST_IP
 
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: DNS Container Discovery Service: Service"
+echo "--------------------------------------------------------------"
 cat > /etc/systemd/system/cannyos-dns-discovery.service << EOF
 [Unit]
 Description=CannyOS: DNS Container Discovery Service
 Documentation=http://git.cannycomputing.com/Atomic/DNS/tree/master/discover
-After=etcd.service
-Requires=etcd.service
+After=etcd.service docker.service
+Requires=etcd.service docker.service
 
 [Service]
 TimeoutStartSec=0
@@ -475,16 +476,24 @@ ExecStop=/usr/bin/docker stop cannyos-dns-discovery
 [Install]
 WantedBy=multi-user.target
 EOF
-cat /etc/systemd/system/cannyos-dns-discovery.service
 
 
+echo "--------------------------------------------------------------"
+echo "CannyOS: DNS Container Discovery Service: Enable"
+echo "--------------------------------------------------------------"
 systemctl enable cannyos-dns-discovery
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
-echo "CannyOS: FreeIPA: Initial Config"
+echo "CannyOS: IPA"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Config"
+echo "--------------------------------------------------------------"
+# Set the IP address for FreeIPA to store as its DNS address (this should be resolveable from putside the cluster)
+IPA_SERVER_DEV=eth0
+IPA_SERVER_IP=$(ip -f inet -o addr show $IPA_SERVER_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 
 # Set the DNS server for the ipa server to use
 DNS_NAMESERVER=8.8.8.8
@@ -516,7 +525,6 @@ TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill $IPA_SERVER_NAME
 ExecStartPre=-/usr/bin/docker rm $IPA_SERVER_NAME
 ExecStartPre=-/usr/bin/docker pull cannyos/ipa_server
-ExecStartPre=-/usr/bin/docker start $IPA_SERVER_NAME
 ExecStartPre=/var/usrlocal/bin/cannyos-ipa-server-config
 ExecStart=/usr/bin/docker logs -f $IPA_SERVER_NAME
 ExecStop=/usr/bin/docker stop $IPA_SERVER_NAME
@@ -526,6 +534,9 @@ WantedBy=multi-user.target
 EOF
 
 
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Server Management Script"
+echo "--------------------------------------------------------------"
 
 cat > /var/usrlocal/bin/cannyos-ipa-server-config << EOF
 #!/bin/bash
@@ -533,20 +544,26 @@ cat > /var/usrlocal/bin/cannyos-ipa-server-config << EOF
 IPA_STATUS="init"
 etcdctl mk /cannyos/config/ipa/status \$IPA_STATUS || etcdctl update /cannyos/config/ipa/status \$IPA_STATUS
 
-
-
 # Launch the freeipa server
-docker run -it -d \
+docker run -d \
     --name $IPA_SERVER_NAME \
     -h $IPA_HOSTNAME \
     -p 443:443 \
+    -p 88:88/tcp \
+    -p 88:88/udp \
+    -p 464:464/udp \
+    -p 464:464/udp \
+    -e IPA_SERVER_IP=$IPA_SERVER_IP \
     -e PASSWORD=$IPA_PASSWORD \
     --dns $DNS_NAMESERVER \
     cannyos/ipa_server
 
+# Get the hostname from docker
 IPA_HOSTNAME=\$(docker inspect --format='{{.Config.Hostname}}' $IPA_SERVER_NAME).\$(docker inspect --format='{{.Config.Domainname}}' $IPA_SERVER_NAME)
 
-# Get the ip address of the ipa-server
+# Todo - sanity check that docker reports the same hostname that we set it
+
+# Get the ip address of the ipa-server from docker
 IPA_IP=\$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $IPA_SERVER_NAME )
 
 # Wait for DNS Resolution to start working
@@ -571,22 +588,15 @@ EOF
 chmod +x /var/usrlocal/bin/cannyos-ipa-server-config
 
 
-
-
-
-
-
-
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Server: Enable"
+echo "--------------------------------------------------------------"
+systemctl enable cannyos-ipa-server
 
 
 echo "--------------------------------------------------------------"
-echo "CannyOS: IPA: Monitor Service"
+echo "CannyOS: IPA: Monitor: Service"
 echo "--------------------------------------------------------------"
-
-
-
-
-
 cat > /etc/systemd/system/cannyos-ipa-monitor.service << EOF
 [Unit]
 Description=CannyOS: IPA Service Monitor
@@ -603,10 +613,9 @@ WantedBy=multi-user.target
 EOF
 
 
-
-
-
-
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Monitor: Script"
+echo "--------------------------------------------------------------"
 cat > /var/usrlocal/bin/cannyos-ipa-monitor << EOF
 #!/bin/sh
 
@@ -628,11 +637,9 @@ chmod +x /var/usrlocal/bin/cannyos-ipa-monitor
 
 
 echo "--------------------------------------------------------------"
-echo "CannyOS: IPA: Enable Services"
+echo "CannyOS: IPA: Monitor: Enable"
 echo "--------------------------------------------------------------"
-
 systemctl enable cannyos-ipa-monitor
-systemctl enable cannyos-ipa-server
 
 
 
