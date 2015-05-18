@@ -224,7 +224,7 @@ SKYDNS_IP=$(ip -f inet -o addr show $SKYDNS_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 cat > /var/usrlocal/bin/skydns-host-management << EOF
 #!/bin/bash
 
-while ! echo 'CannyOS ETCD: now up' | etcdctl member list ; do sleep 1; done
+while ! echo 'CannyOS: ETCD: now up' | etcdctl member list ; do sleep 1; done
 
 
 # Configure the host to use skydns
@@ -271,6 +271,7 @@ cat > /etc/sysconfig/flanneld-conf.json << EOF
   "SubnetLen": 24,
   "Backend": {
     "Type": "vxlan"
+    "VNI": 2000,
   }
 }
 EOF
@@ -289,8 +290,8 @@ Requires=etcd.service
 TimeoutStartSec=0
 Type=oneshot
 User=root
-ExecStartPre=/bin/bash -c "while ! echo 'CannyOS: ETCD now up' | nc 127.0.0.1 2379; do sleep 1; done"
-ExecStart=/bin/curl -L http://127.0.0.1:2379/v2/keys/atomic01/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
+ExecStartPre=/bin/bash -c "while ! echo 'CannyOS: ETCD: now up' | etcdctl member list ; do sleep 1; done"
+ExecStart=/bin/curl -L http://127.0.0.1:4001/v2/keys/atomic01/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
 
 [Install]
 WantedBy=multi-user.target
@@ -304,7 +305,7 @@ cat > /etc/sysconfig/flanneld << EOF
 # Flanneld configuration options  
 
 # etcd url location.  Point this to the server where etcd runs
-FLANNEL_ETCD="http://127.0.0.1:2379"
+FLANNEL_ETCD="http://127.0.0.1:4001"
 
 # etcd config key.  This is the configuration key that flannel queries
 # For address range assignment
@@ -362,7 +363,7 @@ EOF
 
 
 
-cat > /usr/lib/systemd/system/flanneld.service << EOF
+cat > /etc/systemd/system/flanneld.service << EOF
 [Unit]
 Description=Flanneld overlay address etcd agent
 After=network.target flanneld-conf.service flanneld-conf.path
@@ -385,7 +386,7 @@ EOF
 
 
 
-
+ifdown eth0:0; ifdown eth0; ifup eth0
 
 
 
