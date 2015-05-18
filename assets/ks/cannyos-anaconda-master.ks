@@ -441,12 +441,50 @@ EOF
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: DNS Container Discovery Service"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+
+
+HOST_DEV=eth0
+HOST_IP=$(ip -f inet -o addr show $HOST_DEV | cut -d\  -f 7 | cut -d/ -f 1)
+echo $HOST_IP
+
+cat > /etc/systemd/system/cannyos-dns-discovery.service << EOF
+[Unit]
+Description=CannyOS: DNS Container Discovery Service
+Documentation=http://git.cannycomputing.com/Atomic/DNS/tree/master/discover
+After=etcd.service
+Requires=etcd.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill cannyos-dns-discovery 
+ExecStartPre=-/usr/bin/docker rm cannyos-dns-discovery 
+ExecStartPre=-/usr/bin/docker pull cannyos/dns_discover
+ExecStartPre=/usr/bin/docker run -d \
+                            --net=host \
+                            --name cannyos-dns-discovery \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -e HOST_IP=$HOST_IP \
+                            -e ETCD_HOST=127.0.0.1:4001 \
+                            cannyos/dns_discover
+ExecStart=/usr/bin/docker logs -f cannyos-dns-discovery 
+ExecStop=/usr/bin/docker stop cannyos-dns-discovery 
+
+[Install]
+WantedBy=multi-user.target
+EOF
+cat /etc/systemd/system/cannyos-dns-discovery.service
+
+
+systemctl enable cannyos-dns-discovery
+
+
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: FreeIPA: Initial Config"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
-# Set the IP address for FreeIPA to store as its DNS address (this should be resolveable from putside the cluster)
-IPA_SERVER_DEV=eth0
-IPA_SERVER_IP=$(ip -f inet -o addr show $SKYDNS_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 
 # Set the DNS server for the ipa server to use
 DNS_NAMESERVER=8.8.8.8
@@ -503,7 +541,6 @@ docker run -it -d \
     -h $IPA_HOSTNAME \
     -p 443:443 \
     -e PASSWORD=$IPA_PASSWORD \
-    -e IPA_SERVER_IP=$IPA_SERVER_IP \
     --dns $DNS_NAMESERVER \
     cannyos/ipa_server
 
@@ -589,6 +626,10 @@ EOF
 chmod +x /var/usrlocal/bin/cannyos-ipa-monitor
 
 
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Enable Services"
+echo "--------------------------------------------------------------"
 
 systemctl enable cannyos-ipa-monitor
 systemctl enable cannyos-ipa-server
