@@ -62,8 +62,11 @@ sed -i '/^#NAutoVTs=.*/ a\
 NAutoVTs=0' /etc/systemd/logind.conf
 
 
-
-
+# Fixing the locale settings
+cat > /etc/environment << EOF
+LANG="en_US.utf-8"
+LC_ALL="en_US.utf-8"
+EOF
 
 
 
@@ -275,8 +278,9 @@ echo "CannyOS: Flanneld networking configuration"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 
-
-
+echo "--------------------------------------------------------------"
+echo "CannyOS: Flanneld: Initial settings"
+echo "--------------------------------------------------------------"
 
 cat > /etc/sysconfig/flanneld-conf.json << EOF
 {
@@ -290,7 +294,9 @@ cat > /etc/sysconfig/flanneld-conf.json << EOF
 EOF
 
 
-
+echo "--------------------------------------------------------------"
+echo "CannyOS: Flanneld: Configuration: Service"
+echo "--------------------------------------------------------------"
 
 
 cat > /etc/systemd/system/flanneld-conf.service << EOF
@@ -311,7 +317,20 @@ WantedBy=multi-user.target
 EOF
 
 
+cat > /etc/systemd/system/flanneld-conf.path << EOF
+[Path]
+PathExists=/run/flannel/configured
+Unit=docker.service
 
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: Flanneld: Service"
+echo "--------------------------------------------------------------"
 
 
 cat > /etc/sysconfig/flanneld << EOF
@@ -327,52 +346,6 @@ FLANNEL_ETCD_KEY="/atomic01/network"
 # Any additional options that you want to pass
 #FLANNEL_OPTIONS="-iface=\"eth0\""
 EOF
-
-
-
-
-
-cat > /etc/systemd/system/flanneld.path << EOF
-[Path]
-PathExists=/run/flannel/subnet.env
-Unit=docker.service
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-
-
-
-
-cat > /etc/systemd/system/flanneld-conf.path << EOF
-[Path]
-PathExists=/run/flannel/configured
-Unit=docker.service
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-
-
-
-
-mkdir -p /etc/systemd/system/docker.service.d
-cat > /etc/systemd/system/docker.service.d/10-flanneld-network.conf << EOF
-[Unit]
-After=flanneld.service flanneld.path
-Requires=flanneld.service flanneld.path 
-
-[Service]
-TimeoutStartSec=0
-EnvironmentFile=/run/flannel/subnet.env
-ExecStartPre=-/usr/sbin/ip link del docker0
-ExecStart=
-ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OPTIONS \$DOCKER_STORAGE_OPTIONS \$INSECURE_REGISTRY
-EOF
-
-
 
 
 
@@ -397,7 +370,35 @@ EOF
 
 
 
+# This detects that flanneld is reday to go
+cat > /etc/systemd/system/flanneld.path << EOF
+[Path]
+PathExists=/run/flannel/subnet.env
+Unit=docker.service
 
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: Flanneld: Docker Service: Drop In"
+echo "--------------------------------------------------------------"
+
+mkdir -p /etc/systemd/system/docker.service.d
+cat > /etc/systemd/system/docker.service.d/10-flanneld-network.conf << EOF
+[Unit]
+After=flanneld.service flanneld.path
+Requires=flanneld.service flanneld.path 
+
+[Service]
+TimeoutStartSec=0
+EnvironmentFile=/run/flannel/subnet.env
+ExecStartPre=-/usr/sbin/ip link del docker0
+ExecStart=
+ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OPTIONS \$DOCKER_STORAGE_OPTIONS \$INSECURE_REGISTRY
+EOF
 
 
 
@@ -443,18 +444,27 @@ echo "--------------------------------------------------------------------------
 echo "CannyOS: FreeIPA: Initial Config"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
+# Set the IP address for FreeIPA to store as its DNS address (this should be resolveable from putside the cluster)
+IPA_SERVER_DEV=eth0
+IPA_SERVER_IP=$(ip -f inet -o addr show $SKYDNS_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 
+# Set the DNS server for the ipa server to use
+DNS_NAMESERVER=8.8.8.8
 
 # Set the hostname for the master ipa server
 IPA_HOSTNAME=ipa.cannyos.local
 
+
 # Set the initial admin password for the IPA server
 IPA_PASSWORD=Password123
 
-
+# Set the name to give the ipa server container
 IPA_SERVER_NAME=ipa_server
 
-DNS_NAMESERVER=8.8.8.8
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Server Service"
+echo "--------------------------------------------------------------"
 
 cat > /etc/systemd/system/cannyos-ipa-server.service << EOF
 [Unit]
@@ -486,11 +496,15 @@ cat > /var/usrlocal/bin/cannyos-ipa-server-config << EOF
 IPA_STATUS="init"
 etcdctl mk /cannyos/config/ipa/status \$IPA_STATUS || etcdctl update /cannyos/config/ipa/status \$IPA_STATUS
 
+
+
 # Launch the freeipa server
 docker run -it -d \
     --name $IPA_SERVER_NAME \
     -h $IPA_HOSTNAME \
+    -p 443:443 \
     -e PASSWORD=$IPA_PASSWORD \
+    -e IPA_SERVER_IP=$IPA_SERVER_IP \
     --dns $DNS_NAMESERVER \
     cannyos/ipa_server
 
@@ -529,6 +543,10 @@ chmod +x /var/usrlocal/bin/cannyos-ipa-server-config
 
 
 
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Monitor Service"
+echo "--------------------------------------------------------------"
+
 
 
 
@@ -566,6 +584,8 @@ while [ "\$IPA_STATUS" != "ready" ]; do
   sleep 1s
 done
 
+systemctl restart skydns.service
+
 EOF
 chmod +x /var/usrlocal/bin/cannyos-ipa-monitor
 
@@ -583,8 +603,8 @@ echo "--------------------------------------------------------------------------
 cat > /etc/systemd/system/canny-openstack-aio.service << EOF
 [Unit]
 Description=CannyOS: OpenStack AIO Service
-After=docker.service cannyos-ipa-monitor.service
-Requires=docker.service cannyos-ipa-monitor.service
+After=docker.service
+Requires=docker.service
 
 [Service]
 TimeoutStartSec=0
