@@ -481,7 +481,7 @@ EOF
 echo "--------------------------------------------------------------"
 echo "CannyOS: DNS Container Discovery Service: Enable"
 echo "--------------------------------------------------------------"
-#systemctl enable cannyos-dns-discovery
+systemctl enable cannyos-dns-discovery
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -719,7 +719,7 @@ ExecStartPre=/usr/bin/docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /root/canny:/root/canny \
     cannyos/openstack-manager pull
-ExecStartPre=/usr/bin/docker run -d \
+ExecStartPre=/usr/bin/docker run -rm \
     --net=host \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /root/canny:/root/canny \
