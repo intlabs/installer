@@ -453,14 +453,14 @@ Before=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/var/usrlocal/bin/cannyos-ipa-server-start
+ExecStart=/var/usrlocal/bin/canny-docker-storage
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 
-cat > /var/usrlocal/bin/cannyos-ipa-server-start << EOF
+cat > /var/usrlocal/bin/canny-docker-storage << EOF
 #!/bin/bash
 DOCKER_POOL=\$(lvs | grep docker-pool)
 if [ -z "\$DOCKER_POOL" ]; then 
@@ -469,7 +469,7 @@ if [ -z "\$DOCKER_POOL" ]; then
     rm -rf /var/lib/docker/*
 fi
 EOF
-chmod +x /var/usrlocal/bin/cannyos-ipa-server-start
+chmod +x /var/usrlocal/bin/canny-docker-storage
 
 
 systemctl enable canny-docker-storage
