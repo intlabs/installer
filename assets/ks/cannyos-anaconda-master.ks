@@ -1,4 +1,4 @@
-graphical
+text
 lang en_US.UTF-8
 keyboard us
 timezone Etc/UTC --isUtc --ntpservers=0.centos.pool.ntp.org,1.centos.pool.ntp.org,2.centos.pool.ntp.org,3.centos.pool.ntp.org
@@ -114,26 +114,23 @@ EOF
 
 
 
-echo "-----------------------------------------------------------------------"
-echo "CannyOS: Network Configuration"
-echo "-----------------------------------------------------------------------"
-
-
-# Kill network manager like a fox.
-systemctl stop network && \
-systemctl stop NetworkManager && \
-systemctl mask NetworkManager && \
-systemctl start network && \
-systemctl enable network && \
-systemctl status network
-
-
-
 # For cloud images, 'eth0' _is_ the predictable device name, since
 # we don't want to be tied to specific virtual (!) hardware
 rm -f /etc/udev/rules.d/70*
 ln -s /dev/null /etc/udev/rules.d/80-net-setup-link.rules
 
+
+
+echo "-----------------------------------------------------------------------"
+echo "CannyOS: INTERFACES"
+echo "-----------------------------------------------------------------------"
+
+# ALL NODES
+#  * eth0 will be used for pxe, etcd, flanneld                  10.30.0.0 255.255.0.0 (assigned via PXE DCHP server on master node)
+#  * eth1 will be used for neutron - aka the public interfaces  10.0.2.0  255.255.0.0 (managed via neutron)
+#  * eth2 will be used for ceph and/or swift                    10.32.0.0 255.255.0.0 (shares subnet ranges with eth0 initial ip addr)
+# MASTER NODE
+#  * eth3 will be connected to the public internet on the master node (assigned by DHCP)
 
 ETH0_IP=$(ip -f inet -o addr show eth0|cut -d\  -f 7 | cut -d/ -f 1)
 
@@ -143,10 +140,8 @@ N=3; IP_3=$(echo $ETH0_IP | awk -F'.' -v N=$N '{print $N}')
 N=4; IP_4=$(echo $ETH0_IP | awk -F'.' -v N=$N '{print $N}')
 #echo "$IP_1.$IP_2.$IP_3.$IP_4"
 
-
-ETH2_IP=$(echo "$IP_1.$(expr $IP_2 + 1).$IP_3.$IP_4")
+ETH2_IP=$(echo "$IP_1.$(expr $IP_2 + 2).$IP_3.$IP_4")
 ETH2_PREFIX=24
-
 
 cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
 DEVICE="eth0"
@@ -185,6 +180,16 @@ IPV6_FAILURE_FATAL="no"
 IPV6_PRIVACY="no"
 EOF
 
+#cat > /etc/sysconfig/network-scripts/ifcfg-eth3 << EOF
+#DEVICE="eth3"
+#NAME="eth3"
+#TYPE="Ethernet"
+#ONBOOT="yes"
+#BOOTPROTO="dhcp"
+#PERSISTENT_DHCLIENT="yes"
+#EOF
+
+
 echo "--------------------------------------------------------------"
 echo "CannyOS: Hosts"
 echo "--------------------------------------------------------------"
@@ -205,28 +210,7 @@ echo "--------------------------------------------------------------"
 echo "$IP_1-$IP_2-$IP_3-$IP_4.cannyos.local" > /etc/hostname
 
 
-echo "--------------------------------------------------------------"
-echo "CannyOS: NetworkManager"
-echo "--------------------------------------------------------------"
 
-
-# stop network manager from starting
-systemctl mask NetworkManager
-
-
-echo "----------------------------------------------------------------------------------------------------------------------------------------------"
-echo "CannyOS: NTPD"
-echo "----------------------------------------------------------------------------------------------------------------------------------------------"
-systemctl enable ntpd
-
-
-echo "----------------------------------------------------------------------------------------------------------------------------------------------"
-echo "CannyOS: Cockpit"
-echo "----------------------------------------------------------------------------------------------------------------------------------------------"
-
-# enable cockpit
-systemctl start cockpit.service
-systemctl enable cockpit.socket
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -302,8 +286,6 @@ WantedBy=multi-user.target
 EOF
 
 
-# enable etcd
-systemctl enable etcd.service
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -344,8 +326,6 @@ ExecStart=/bin/skydns -addr=$SKYDNS_IP:53 -machines=http://127.0.0.1:4001 -names
 WantedBy=multi-user.target
 EOF
 
-# enable skydns
-systemctl enable skydns.service
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -511,7 +491,6 @@ EOF
 chmod +x /var/usrlocal/bin/canny-docker-storage
 
 
-systemctl enable canny-docker-storage
 
 
 
@@ -591,11 +570,6 @@ ExecStop=/usr/bin/docker stop cannyos-dns-discovery
 WantedBy=multi-user.target
 EOF
 
-
-echo "--------------------------------------------------------------"
-echo "CannyOS: DNS Container Discovery Service: Enable"
-echo "--------------------------------------------------------------"
-systemctl enable cannyos-dns-discovery
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -761,10 +735,6 @@ EOF
 chmod +x /var/usrlocal/bin/cannyos-ipa-server-stop
 
 
-echo "--------------------------------------------------------------"
-echo "CannyOS: IPA: Server Service: Enable"
-echo "--------------------------------------------------------------"
-systemctl enable cannyos-ipa-server
 
 
 echo "--------------------------------------------------------------"
@@ -838,12 +808,6 @@ EOF
 chmod +x /var/usrlocal/bin/cannyos-ipa-monitor
 
 
-echo "--------------------------------------------------------------"
-echo "CannyOS: IPA: Monitor: Enable"
-echo "--------------------------------------------------------------"
-systemctl enable cannyos-ipa-monitor
-
-
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: OpenStack AIO"
@@ -907,6 +871,25 @@ SETLOCALDEFS=0
 EOF
 
 
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+echo "CannyOS: Enable Services"
+echo "----------------------------------------------------------------------------------------------------------------------------------------------"
+
+systemctl enable canny-docker-storage
+
+systemctl mask NetworkManager
+systemctl enable ntpd
+
+systemctl enable etcd.service
+systemctl enable skydns.service
+systemctl enable cannyos-dns-discovery
+
+systemctl enable cannyos-ipa-monitor
+
+
+# Master node specific
+systemctl enable cannyos-ipa-server
+systemctl enable cockpit.socket
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
