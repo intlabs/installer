@@ -17,14 +17,12 @@ services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-f
 # We use NetworkManager, and Avahi doesn't make much sense in the cloud
 services --disabled=network,avahi-daemon
 
-#zerombr
-#ignoredisk --only-use=sda,sdb
-#clearpart --all
-#part /boot --size=300 --fstype="xfs"
-#part pv.01 --grow
-#volgroup atomicos pv.01
-#logvol / --size=3000 --fstype="xfs" --name=root --vgname=atomicos
-#logvol /var/lib/docker --size=3000 --fstype="xfs" --name=docker --vgname=atomicos
+zerombr
+clearpart --all --initlabel --drives=sda,sdb
+part /boot --size=300 --fstype="xfs"
+part pv.01 --grow
+volgroup cannyos pv.01
+logvol / --size=8192 --fstype="xfs" --name=root --vgname=cannyos
 
 # Equivalent of %include fedora-repo.ks
 ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="centos-atomic-host/7/x86_64/standard" --url="http://%(server_ip)s:{{ REPO_PORT }}/repo/" --nogpg
@@ -401,6 +399,10 @@ ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OP
 EOF
 
 
+
+
+
+
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: Docker"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -434,6 +436,20 @@ DOCKER_CERT_PATH=/etc/docker
 # To disable, uncomment the line below.
 # LOGROTATE=false
 EOF
+
+
+
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: Docker: Storage Setup"
+echo "--------------------------------------------------------------"
+
+docker-storage-setup
+
+
+
+
+
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
