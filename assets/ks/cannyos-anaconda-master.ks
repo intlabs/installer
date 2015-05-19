@@ -662,6 +662,27 @@ etcdctl set /cannyos/config/ipa/status \$IPA_STATUS
 IPA_SERVER_IP=$IPA_SERVER_IP
 IPA_SERVER_NAME=$IPA_SERVER_NAME
 
+
+echo "------------------------------------------"
+echo "CannyOS: IPA: Data Container"
+echo "------------------------------------------"
+
+IPA_SERVER_DATA_NAME=$( echo $IPA_SERVER_NAME )_data
+# Check to see if an IPA data container already exists
+if docker inspect $IPA_SERVER_DATA_NAME ; then
+  echo "CannyOS: IPA Server data container exists"
+else
+  echo "CannyOS: IPA Server data container deos not exist: creating"
+  docker run \
+  --name $IPA_SERVER_DATA_NAME \
+  -v /data \
+  cannyos/centos sh
+fi
+
+echo "------------------------------------------"
+echo "CannyOS: IPA: Server Launch"
+echo "------------------------------------------"
+
 # Check to see if an IPA server container already exists
 if docker inspect \$IPA_SERVER_NAME ; then
   echo "CannyOS: IPA Server container exists: attempting to start"
@@ -671,7 +692,7 @@ else
   docker run -d \
   --name \$IPA_SERVER_NAME \
   --dns $DNS_NAMESERVER \
-  -v /var/lib/ipa-data:/data:rw \
+  --volumes-from=\$IPA_SERVER_DATA_NAME \
   -h $IPA_HOSTNAME \
   -p 443:443 \
   -p 88:88/tcp \
@@ -683,6 +704,11 @@ else
   -e PASSWORD=$IPA_PASSWORD \
   cannyos/ipa_server
 fi
+
+
+echo "------------------------------------------"
+echo "CannyOS: IPA: Initial Monitoring"
+echo "------------------------------------------"
 
 # Get the hostname from docker
 IPA_HOSTNAME=\$(docker inspect --format='{{.Config.Hostname}}' \$IPA_SERVER_NAME).\$(docker inspect --format='{{.Config.Domainname}}' \$IPA_SERVER_NAME)
@@ -699,6 +725,10 @@ while [ "\$DNS_RESPONSE" != "\$IPA_SERVER_IP" ]; do
   sleep 1s
 done
 
+
+echo "------------------------------------------"
+echo "CannyOS: IPA: Monitoring Handover"
+echo "------------------------------------------"
 
 # Update the cluster registry with our info
 etcdctl mk /cannyos/config/ipa/ip \$IPA_IP || etcdctl update /cannyos/config/ipa/ip \$IPA_IP
