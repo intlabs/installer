@@ -444,10 +444,35 @@ echo "--------------------------------------------------------------"
 echo "CannyOS: Docker: Storage Setup"
 echo "--------------------------------------------------------------"
 
-docker-storage-setup
+
+cat > /etc/systemd/system/canny-docker-storage.service << EOF
+[Unit]
+Description=CannyOS: Docker Storage Setup
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/var/usrlocal/bin/cannyos-ipa-server-start
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
 
+cat > /var/usrlocal/bin/cannyos-ipa-server-start << EOF
+#!/bin/bash
+DOCKER_POOL=\$(lvs | grep docker-pool)
+if [ -z "\$DOCKER_POOL" ]; then 
+    echo "CannyOS: No docker storage pool detected: Creating"
+    docker-storage-setup
+    rm -rf /var/lib/docker/*
+fi
+EOF
+chmod +x /var/usrlocal/bin/cannyos-ipa-server-start
 
+
+systemctl enable canny-docker-storage
 
 
 
