@@ -878,6 +878,7 @@ echo "--------------------------------------------------------------------------
 systemctl enable canny-docker-storage
 
 systemctl mask NetworkManager
+systemctl enable network
 systemctl enable ntpd
 
 systemctl enable etcd.service
