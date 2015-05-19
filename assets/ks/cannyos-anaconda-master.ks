@@ -522,12 +522,12 @@ Requires=docker.service etcd.service
 
 [Service]
 TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker pull cannyos/ipa_server
 ExecStartPre=-/usr/bin/docker kill $IPA_SERVER_NAME
 ExecStartPre=-/usr/bin/docker rm $IPA_SERVER_NAME
-ExecStartPre=-/usr/bin/docker pull cannyos/ipa_server
-ExecStartPre=/var/usrlocal/bin/cannyos-ipa-server-config
+ExecStartPre=/var/usrlocal/bin/cannyos-ipa-server-start
 ExecStart=/usr/bin/docker logs -f $IPA_SERVER_NAME
-ExecStop=/usr/bin/docker stop $IPA_SERVER_NAME
+ExecStop=/var/usrlocal/bin/cannyos-ipa-server-stop
 
 [Install]
 WantedBy=multi-user.target
@@ -535,50 +535,60 @@ EOF
 
 
 echo "--------------------------------------------------------------"
-echo "CannyOS: IPA: Server Management Script"
+echo "CannyOS: IPA: Server Service: Start Script"
 echo "--------------------------------------------------------------"
 
-cat > /var/usrlocal/bin/cannyos-ipa-server-config << EOF
+cat > /var/usrlocal/bin/cannyos-ipa-server-start << EOF
 #!/bin/bash
 # Inform the service monitor that we are initialising
 IPA_STATUS="init"
 etcdctl set /cannyos/config/ipa/status \$IPA_STATUS
 
-# Launch the freeipa server
-docker run -d \
-    --name $IPA_SERVER_NAME \
-    -h $IPA_HOSTNAME \
-    -p 443:443 \
-    -p 88:88/tcp \
-    -p 88:88/udp \
-    -p 389:389/tcp \
-    -p 464:464/udp \
-    -p 464:464/tcp \
-    -e IPA_SERVER_IP=$IPA_SERVER_IP \
-    -e PASSWORD=$IPA_PASSWORD \
-    --dns $DNS_NAMESERVER \
-    cannyos/ipa_server
+# This will be defined by kickstart or cloud-init
+IPA_SERVER_IP=$IPA_SERVER_IP
+IPA_SERVER_NAME=$IPA_SERVER_NAME
+
+# Check to see if an IPA server container already exists
+if docker inspect \$IPA_SERVER_NAME ; then
+  echo "CannyOS: IPA Server container exists: attempting to start"
+  docker start \$IPA_SERVER_NAME
+else
+  echo "CannyOS: IPA Server does not exist: attempting to create"
+  docker run -d \
+  --name \$IPA_SERVER_NAME \
+  --dns $DNS_NAMESERVER \
+  -v /var/lib/ipa-data:/data:rw \
+  -h $IPA_HOSTNAME \
+  -p 443:443 \
+  -p 88:88/tcp \
+  -p 88:88/udp \
+  -p 389:389/tcp \
+  -p 464:464/udp \
+  -p 464:464/tcp \
+  -e IPA_SERVER_IP=\$IPA_SERVER_IP \
+  -e PASSWORD=$IPA_PASSWORD \
+  cannyos/ipa_server
+fi
 
 # Get the hostname from docker
-IPA_HOSTNAME=\$(docker inspect --format='{{.Config.Hostname}}' $IPA_SERVER_NAME).\$(docker inspect --format='{{.Config.Domainname}}' $IPA_SERVER_NAME)
+IPA_HOSTNAME=\$(docker inspect --format='{{.Config.Hostname}}' \$IPA_SERVER_NAME).\$(docker inspect --format='{{.Config.Domainname}}' \$IPA_SERVER_NAME)
 
 # Todo - sanity check that docker reports the same hostname that we set it
 
 # Get the ip address of the ipa-server from docker
-IPA_IP=\$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $IPA_SERVER_NAME )
+IPA_IP=\$(docker inspect --format='{{.NetworkSettings.IPAddress}}' \$IPA_SERVER_NAME )
 
 # Wait for DNS Resolution to start working
-DNS_RESPONSE=\$(dig @\$IPA_SERVER_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
+DNS_RESPONSE=\$(dig @\$IPA_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
 while [ "\$DNS_RESPONSE" != "\$IPA_SERVER_IP" ]; do
-  DNS_RESPONSE=\$(dig @\$IPA_SERVER_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
+  DNS_RESPONSE=\$(dig @\$IPA_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
   sleep 1s
 done
 
-# Configure SkyDns to use IPA as its nameserver, and listen on all ports
-etcdctl set /skydns/config "{\"dns_addr\":\"0.0.0.0:53\",\"ttl\":3600, \"nameservers\": [\"\$IPA_IP:53\"]}"
 
 # Update the cluster registry with our info
 etcdctl mk /cannyos/config/ipa/ip \$IPA_IP || etcdctl update /cannyos/config/ipa/ip \$IPA_IP
+etcdctl mk /cannyos/config/ipa/public_ip \$IPA_SERVER_IP || etcdctl update /cannyos/config/ipa/public_ip \$IPA_SERVER_IP
 etcdctl mk /cannyos/config/ipa/hostname \$IPA_HOSTNAME || etcdctl update /cannyos/config/ipa/hostname \$IPA_HOSTNAME
 
 # Inform the service monitor that we are ready
@@ -586,11 +596,29 @@ IPA_STATUS="ready"
 etcdctl mk /cannyos/config/ipa/status \$IPA_STATUS || etcdctl update /cannyos/config/ipa/status \$IPA_STATUS
 
 EOF
-chmod +x /var/usrlocal/bin/cannyos-ipa-server-config
+chmod +x /var/usrlocal/bin/cannyos-ipa-server-start
 
 
 echo "--------------------------------------------------------------"
-echo "CannyOS: IPA: Server: Enable"
+echo "CannyOS: IPA: Server Service: Stop Script"
+echo "--------------------------------------------------------------"
+
+cat > /var/usrlocal/bin/cannyos-ipa-server-stop << EOF
+#!/bin/bash
+
+# Inform the service monitor that we are down
+IPA_STATUS="down"
+etcdctl set /cannyos/config/ipa/status \$IPA_STATUS
+
+# Stop the Server
+docker stop $IPA_SERVER_NAME
+
+EOF
+chmod +x /var/usrlocal/bin/cannyos-ipa-server-stop
+
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: IPA: Server Service: Enable"
 echo "--------------------------------------------------------------"
 systemctl enable cannyos-ipa-server
 
@@ -606,8 +634,7 @@ Requires=etcd.service
 
 [Service]
 TimeoutStartSec=0
-ExecStartPre=/var/usrlocal/bin/cannyos-ipa-monitor
-ExecStart=/bin/bash -c "echo 'CannyOS IPA server: is now UP'"
+ExecStart=/var/usrlocal/bin/cannyos-ipa-monitor
 
 [Install]
 WantedBy=multi-user.target
@@ -620,21 +647,51 @@ echo "--------------------------------------------------------------"
 cat > /var/usrlocal/bin/cannyos-ipa-monitor << EOF
 #!/bin/sh
 
-etcdctl get /cannyos/config/ipa/status || etcdctl mk /cannyos/config/ipa/status waiting
+#Check the status of the IPA Service marking it as down if it dos not exist yet.
+etcdctl get /cannyos/config/ipa/status || etcdctl mk /cannyos/config/ipa/status down
 
-IPA_STATUS=\$(etcdctl get /cannyos/config/ipa/status)
-
-while [ "\$IPA_STATUS" != "ready" ]; do
-  etcdctl watch /cannyos/config/ipa/status
+while true
+do
   IPA_STATUS=\$(etcdctl get /cannyos/config/ipa/status)
-  sleep 1s
+
+  if [ "\$IPA_STATUS" != "ready" ]; then
+    echo "CannyOS: IPA: DOWN"
+
+    echo "CannyOS: Setting SkyDNS Forwarders"
+    etcdctl set /skydns/config "{\"dns_addr\":\"0.0.0.0:53\",\"ttl\":3600, \"nameservers\": [\"8.8.8.8:53\"]}"
+
+  elif [ "\$IPA_STATUS" == "ready" ]; then
+    echo "CannyOS: IPA: READY"
+
+    IPA_IP=\$(etcdctl get /cannyos/config/ipa/ip)
+    IPA_HOSTNAME=\$(etcdctl get /cannyos/config/ipa/hostname)
+    IPA_SERVER_IP=\$(etcdctl get /cannyos/config/ipa/public_ip)
+
+    echo "CannyOS: IPA: Waiting for DNS resolution to work @\$IPA_IP for \$IPA_HOSTNAME to return \$IPA_SERVER_IP"
+    # Wait for DNS Resolution to start working
+    DNS_RESPONSE=\$(dig @\$IPA_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
+    while [ "\$DNS_RESPONSE" != "\$IPA_SERVER_IP" ]; do
+      DNS_RESPONSE=\$(dig @\$IPA_IP \$IPA_HOSTNAME | awk '/ANSWER SECTION/ { getline; print }' | awk -F' ' '{print \$5}')
+      sleep 1s
+    done
+
+    echo "CannyOS: Setting SkyDNS Forwarders to the IPA server @\$IPA_IP"
+    etcdctl set /skydns/config "{\"dns_addr\":\"0.0.0.0:53\",\"ttl\":3600, \"nameservers\": [\"\$IPA_IP:53\"]}"
+
+  fi
+
+  echo "CannyOS: Restarting SkyDNS"
+  systemctl restart skydns.service
+
+  echo "CannyOS: SkyDNS restarted"
+  #systemctl status skydns.service
+  
+  echo "CannyOS: Waiting on Service Status Update"
+  etcdctl watch /cannyos/config/ipa/status
+
 done
-
-systemctl restart skydns.service
-
 EOF
 chmod +x /var/usrlocal/bin/cannyos-ipa-monitor
-
 
 
 echo "--------------------------------------------------------------"
@@ -667,7 +724,7 @@ ExecStartPre=/usr/bin/docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /root/canny:/root/canny \
     cannyos/openstack-manager start
-ExecStart=/usr/bin/docker run --rm \
+ExecStart=/usr/bin/docker run --rm -t \
     --net=host \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /root/canny:/root/canny \
