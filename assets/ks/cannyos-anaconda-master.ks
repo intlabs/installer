@@ -141,22 +141,11 @@ N=1; IP_1=$(echo $ETH0_IP | awk -F'.' -v N=$N '{print $N}')
 N=2; IP_2=$(echo $ETH0_IP | awk -F'.' -v N=$N '{print $N}')
 N=3; IP_3=$(echo $ETH0_IP | awk -F'.' -v N=$N '{print $N}')
 N=4; IP_4=$(echo $ETH0_IP | awk -F'.' -v N=$N '{print $N}')
+#echo "$IP_1.$IP_2.$IP_3.$IP_4"
 
-echo "$IP_1.$IP_2.$IP_3.$IP_4"
 
-ETH2_ADDRESS=$(echo "$IP_1.$(expr $IP_2 + 1).$IP_3.$IP_4")
+ETH2_IP=$(echo "$IP_1.$(expr $IP_2 + 1).$IP_3.$IP_4")
 ETH2_PREFIX=24
-ETH2_GATEWAY=127.0.0.1
-ETH2_DNS=127.0.0.1
-ETH2_ADDRESS=$(echo "$IP_1.$(expr $IP_2 + 2).$IP_3.$IP_4")
-ETH2_PREFIX=24
-ETH2_GATEWAY=127.0.0.1
-ETH2_DNS=127.0.0.1
-ETH3_ADDRESS=$(echo "$IP_1.$(expr $IP_2 + 3).$IP_3.$IP_4")
-ETH3_PREFIX=24
-ETH3_GATEWAY=127.0.0.1
-ETH3_DNS=127.0.0.1
-
 
 
 cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
@@ -169,17 +158,32 @@ PERSISTENT_DHCLIENT="yes"
 EOF
 
 cat > /etc/sysconfig/network-scripts/ifcfg-eth1 << EOF
-DEVICE=eth1
-NAME=eth1
-TYPE=Ethernet
-ONBOOT=yes
-IPV6INIT=no
-IPV6_AUTOCONF=no
-IPV6_DEFROUTE=yes
-IPV6_FAILURE_FATAL=no
-IPV6_PRIVACY=no
+DEVICE="eth1"
+NAME="eth1"
+TYPE="Ethernet"
+ONBOOT="yes"
+BOOTPROTO="none"
+IPV6INIT="no"
+IPV6_AUTOCONF="no"
+IPV6_DEFROUTE="no"
+IPV6_FAILURE_FATAL="no"
+IPV6_PRIVACY="no"
 EOF
 
+cat > /etc/sysconfig/network-scripts/ifcfg-eth2 << EOF
+DEVICE="eth2"
+NAME="eth2"
+TYPE="Ethernet"
+ONBOOT="yes"
+BOOTPROTO="none"
+IPADDR="$ETH2_IP"
+PREFIX="$ETH2_PREFIX"
+IPV6INIT="no"
+IPV6_AUTOCONF="no"
+IPV6_DEFROUTE="no"
+IPV6_FAILURE_FATAL="no"
+IPV6_PRIVACY="no"
+EOF
 
 echo "--------------------------------------------------------------"
 echo "CannyOS: Hosts"
@@ -229,6 +233,75 @@ echo "--------------------------------------------------------------------------
 echo "CannyOS: ETCD"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
+
+ETCD_DEV=eth0
+ETCD_IP=$( ip -f inet -o addr show $ETCD_DEV | cut -d\  -f 7 | cut -d/ -f 1 )
+
+cat > /etc/etcd/etcd.conf << EOF
+# [member]
+ETCD_NAME=$NODE_IP
+ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
+#ETCD_SNAPSHOT_COUNTER="10000"
+#ETCD_HEARTBEAT_INTERVAL="100"
+#ETCD_ELECTION_TIMEOUT="1000"
+ETCD_LISTEN_PEER_URLS="http://$ETCD_IP:2380,http://$ETCD_IP:7001"
+ETCD_LISTEN_CLIENT_URLS="http://$ETCD_IP:2379,http://$ETCD_IP:4001"
+#ETCD_MAX_SNAPSHOTS="5"
+#ETCD_MAX_WALS="5"
+#ETCD_CORS=""
+#
+#[cluster]
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://$ETCD_IP:2380,http://$ETCD_IP:7001"
+# if you use different ETCD_NAME (e.g. test), set ETCD_INITIAL_CLUSTER value for this name, i.e. "test=http://..."
+#ETCD_INITIAL_CLUSTER="default=http://localhost:2380,default=http://localhost:7001"
+#ETCD_INITIAL_CLUSTER_STATE="new"
+#ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
+ETCD_ADVERTISE_CLIENT_URLS="http://$ETCD_IP:4001"
+ETCD_DISCOVERY="{{ ETCD_DISCOVERY_TOKEN }}"
+#ETCD_DISCOVERY_SRV=""
+#ETCD_DISCOVERY_FALLBACK="proxy"
+#ETCD_DISCOVERY_PROXY=""
+#
+#[proxy]
+#ETCD_PROXY="off"
+#
+#[security]
+#ETCD_CA_FILE=""
+#ETCD_CERT_FILE=""
+#ETCD_KEY_FILE=""
+#ETCD_PEER_CA_FILE=""
+#ETCD_PEER_CERT_FILE=""
+#ETCD_PEER_KEY_FILE=""
+EOF
+
+
+cat > /etc/systemd/system/etcd.service << EOF
+[Unit]
+Description=Etcd Server
+After=network.target
+
+[Service]
+Type=simple
+# etcd logs to the journal directly, suppress double logging
+StandardOutput=null
+WorkingDirectory=/var/lib/etcd/
+EnvironmentFile=-/etc/etcd/etcd.conf
+User=etcd
+TimeoutStartSec=0
+ExecStart=/usr/bin/etcd \
+  -name \${ETCD_NAME} \
+  -initial-advertise-peer-urls \${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
+  -listen-peer-urls \${ETCD_LISTEN_PEER_URLS} \
+  -listen-client-urls \${ETCD_LISTEN_CLIENT_URLS} \
+  -discovery \${ETCD_DISCOVERY}
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
 # enable etcd
 systemctl enable etcd.service
 
@@ -238,7 +311,6 @@ echo "CannyOS: SkyDNS"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 
-# Device that skydns is active on: this should NOT be public in production
 SKYDNS_DEV=eth0
 SKYDNS_IP=$(ip -f inet -o addr show $SKYDNS_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 
@@ -314,7 +386,7 @@ TimeoutStartSec=0
 Type=oneshot
 User=root
 ExecStartPre=/bin/bash -c "while ! echo 'CannyOS: ETCD: now up' | etcdctl member list ; do sleep 1; done"
-ExecStart=/bin/curl -L http://127.0.0.1:4001/v2/keys/atomic01/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
+ExecStart=/bin/curl -L http://$ETCD_IP:4001/v2/keys/cannyos/network/config -XPUT --data-urlencode value@/etc/sysconfig/flanneld-conf.json
 
 [Install]
 WantedBy=multi-user.target
@@ -340,11 +412,11 @@ cat > /etc/sysconfig/flanneld << EOF
 # Flanneld configuration options  
 
 # etcd url location.  Point this to the server where etcd runs
-FLANNEL_ETCD="http://127.0.0.1:4001"
+FLANNEL_ETCD="http://$ETCD_IP:4001"
 
 # etcd config key.  This is the configuration key that flannel queries
 # For address range assignment
-FLANNEL_ETCD_KEY="/atomic01/network"
+FLANNEL_ETCD_KEY="/cannyos/network"
 
 # Any additional options that you want to pass
 #FLANNEL_OPTIONS="-iface=\"eth0\""
@@ -485,8 +557,9 @@ echo "--------------------------------------------------------------------------
 echo "--------------------------------------------------------------"
 echo "CannyOS: DNS Container Discovery Service: Config"
 echo "--------------------------------------------------------------"
-HOST_DEV=eth0
-HOST_IP=$(ip -f inet -o addr show $HOST_DEV | cut -d\  -f 7 | cut -d/ -f 1)
+
+DNS_DISCOVER_HOST_DEV=eth0
+DNS_DISCOVER_HOST_IP=$(ip -f inet -o addr show $DNS_DISCOVER_HOST_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 
 
 echo "--------------------------------------------------------------"
@@ -508,8 +581,8 @@ ExecStartPre=/usr/bin/docker run -d \
                             --net=host \
                             --name cannyos-dns-discovery \
                             -v /var/run/docker.sock:/var/run/docker.sock \
-                            -e HOST_IP=$HOST_IP \
-                            -e ETCD_HOST=127.0.0.1:4001 \
+                            -e HOST_IP=$DNS_DISCOVER_HOST_IP \
+                            -e ETCD_HOST=$ETCD_IP:4001 \
                             cannyos/dns_discover
 ExecStart=/usr/bin/docker logs -f cannyos-dns-discovery 
 ExecStop=/usr/bin/docker stop cannyos-dns-discovery 

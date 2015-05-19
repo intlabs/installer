@@ -40,7 +40,8 @@ sed -i "s/{{ IMAGES_PORT }}/$IMAGES_PORT/g" /usr/share/nginx/html/cloudconfig/*
 
 
 # Update discovery token, bootstrap with 3 nodes
-ETCD_DISCOVERY_TOKEN=$(wget -qO- https:\/\/discovery.etcd.io\/new?size=3)
+ETCD_DISCOVERY_TOKEN=$(wget -qO- https:\/\/discovery.etcd.io\/new?size=$ETCD_INITIAL_NODES)
+
 echo "ETCD discovery token: $ETCD_DISCOVERY_TOKEN"
 sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/html/ks/*
 sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/html/cloudconfig/*
