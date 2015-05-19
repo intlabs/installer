@@ -3,40 +3,44 @@ lang en_US.UTF-8
 keyboard us
 timezone Etc/UTC --isUtc --ntpservers=0.centos.pool.ntp.org,1.centos.pool.ntp.org,2.centos.pool.ntp.org,3.centos.pool.ntp.org
 
-auth --useshadow --enablemd5
 selinux --enforcing
-rootpw --lock --iscrypted locked
-#sshkey --username=root "ssh key"
-user --groups=wheel --name=cannyos --password=password --gecos="cannyos"
-firewall --disabled
 
-bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0"
+auth --useshadow --enablemd5
+
+rootpw --lock --iscrypted locked
+
+user --groups=wheel --name=cannyos --password=password --gecos="cannyos"
+
+
+firewall --disabled
 network  --bootproto=dhcp --device=eth0 --ipv6=auto --activate --onboot=on
+
 
 services --enabled=sshd,rsyslog,cloud-init,cloud-init-local,cloud-config,cloud-final
 # We use NetworkManager, and Avahi doesn't make much sense in the cloud
 services --disabled=network,avahi-daemon
 
+
+bootloader --timeout=1 --append="no_timer_check console=tty1 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0"
+
+
 zerombr
 clearpart --all --initlabel --drives=sda,sdb
-part /boot --size=300 --fstype="xfs"
-part pv.01 --grow
-volgroup cannyos pv.01
+part /boot --size=300 --fstype="ext4"
+part pv.01 --size=1000 --grow --ondisk=sda
+part pv.02 --size=1000 --grow --ondisk=sdb
+volgroup cannyos pv.01 pv.02
 logvol / --size=8192 --fstype="xfs" --name=root --vgname=cannyos
+
 
 # Equivalent of %include fedora-repo.ks
 ostreesetup --osname="centos-atomic-host" --remote="centos-atomic-host" --ref="centos-atomic-host/7/x86_64/standard" --url="http://%(server_ip)s:{{ REPO_PORT }}/repo/" --nogpg
 
+
 reboot
 
+
 %post --erroronfail
-
-
-
-
-
-
-
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -115,7 +119,7 @@ echo "CannyOS: Network Configuration"
 echo "-----------------------------------------------------------------------"
 
 
-# Remove network manager
+# Kill network manager like a fox.
 systemctl stop network && \
 systemctl stop NetworkManager && \
 systemctl mask NetworkManager && \
@@ -177,23 +181,29 @@ IPV6_PRIVACY=no
 EOF
 
 
-# generic localhost names
+echo "--------------------------------------------------------------"
+echo "CannyOS: Hosts"
+echo "--------------------------------------------------------------"
+
+
 cat > /etc/hosts << EOF
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
 EOF
-echo .
+
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: Hostname"
+echo "--------------------------------------------------------------"
+
 
 echo "$IP_1-$IP_2-$IP_3-$IP_4.cannyos.local" > /etc/hostname
 
 
-# Because memory is scarce resource in most cloud/virt environments,
-# and because this impedes forensics, we are differing from the Fedora
-# default of having /tmp on tmpfs.
-echo "Disabling tmpfs for /tmp."
-systemctl mask tmp.mount
-
+echo "--------------------------------------------------------------"
+echo "CannyOS: NetworkManager"
+echo "--------------------------------------------------------------"
 
 
 # stop network manager from starting
@@ -204,7 +214,6 @@ echo "--------------------------------------------------------------------------
 echo "CannyOS: NTPD"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 systemctl enable ntpd
-
 
 
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -224,22 +233,19 @@ echo "--------------------------------------------------------------------------
 systemctl enable etcd.service
 
 
-
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: SkyDNS"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 
 # Device that skydns is active on: this should NOT be public in production
-
 SKYDNS_DEV=eth0
 SKYDNS_IP=$(ip -f inet -o addr show $SKYDNS_DEV | cut -d\  -f 7 | cut -d/ -f 1)
 
+
 cat > /var/usrlocal/bin/skydns-host-management << EOF
 #!/bin/bash
-
 while ! echo 'CannyOS: ETCD: now up' | etcdctl member list ; do sleep 1; done
-
 
 # Configure the host to use skydns
 cp -f /etc/resolv.conf /etc/resolv.conf.pre-skydns
@@ -270,7 +276,6 @@ EOF
 systemctl enable skydns.service
 
 
-
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: Flanneld networking configuration"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
@@ -279,6 +284,7 @@ echo "--------------------------------------------------------------------------
 echo "--------------------------------------------------------------"
 echo "CannyOS: Flanneld: Initial settings"
 echo "--------------------------------------------------------------"
+
 
 cat > /etc/sysconfig/flanneld-conf.json << EOF
 {
@@ -325,7 +331,6 @@ WantedBy=multi-user.target
 EOF
 
 
-
 echo "--------------------------------------------------------------"
 echo "CannyOS: Flanneld: Service"
 echo "--------------------------------------------------------------"
@@ -344,7 +349,6 @@ FLANNEL_ETCD_KEY="/atomic01/network"
 # Any additional options that you want to pass
 #FLANNEL_OPTIONS="-iface=\"eth0\""
 EOF
-
 
 
 cat > /etc/systemd/system/flanneld.service << EOF
@@ -367,7 +371,6 @@ RequiredBy=docker.service
 EOF
 
 
-
 # This detects that flanneld is reday to go
 cat > /etc/systemd/system/flanneld.path << EOF
 [Path]
@@ -379,10 +382,10 @@ WantedBy=multi-user.target
 EOF
 
 
-
 echo "--------------------------------------------------------------"
 echo "CannyOS: Flanneld: Docker Service: Drop In"
 echo "--------------------------------------------------------------"
+
 
 mkdir -p /etc/systemd/system/docker.service.d
 cat > /etc/systemd/system/docker.service.d/10-flanneld-network.conf << EOF
@@ -399,45 +402,9 @@ ExecStart=/usr/bin/docker -d --bip=\${FLANNEL_SUBNET} --mtu=\${FLANNEL_MTU} \$OP
 EOF
 
 
-
-
-
-
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "CannyOS: Docker"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
-
-echo "--------------------------------------------------------------"
-echo "CannyOS: Docker: Config"
-echo "--------------------------------------------------------------"
-
-cat > /etc/sysconfig/docker << EOF
-# /etc/sysconfig/docker
-
-# Modify these options if you want to change the way the docker daemon runs
-#OPTIONS='--selinux-enabled --dns 8.8.8.8 -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
-OPTIONS='--dns $SKYDNS_IP -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
-DOCKER_CERT_PATH=/etc/docker
-
-# Enable insecure registry communication by appending the registry URL
-# to the INSECURE_REGISTRY variable below and uncommenting it
-# INSECURE_REGISTRY='--insecure-registry '
-
-# On SELinux System, if you remove the --selinux-enabled option, you
-# also need to turn on the docker_transition_unconfined boolean.
-# setsebool -P docker_transition_unconfined
-
-# Location used for temporary files, such as those created by
-# docker load and build operations. Default is /var/lib/docker/tmp
-# Can be overriden by setting the following environment variable.
-# DOCKER_TMPDIR=/var/tmp
-
-# Controls the /etc/cron.daily/docker-logrotate cron job status.
-# To disable, uncomment the line below.
-# LOGROTATE=false
-EOF
-
-
 
 
 echo "--------------------------------------------------------------"
@@ -473,6 +440,39 @@ chmod +x /var/usrlocal/bin/canny-docker-storage
 
 
 systemctl enable canny-docker-storage
+
+
+
+
+echo "--------------------------------------------------------------"
+echo "CannyOS: Docker: Config"
+echo "--------------------------------------------------------------"
+
+cat > /etc/sysconfig/docker << EOF
+# /etc/sysconfig/docker
+
+# Modify these options if you want to change the way the docker daemon runs
+#OPTIONS='--selinux-enabled --dns 8.8.8.8 -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+OPTIONS='--dns $SKYDNS_IP -H tcp://$NODE_IP:2375 -H unix:///var/run/docker.sock'
+DOCKER_CERT_PATH=/etc/docker
+
+# Enable insecure registry communication by appending the registry URL
+# to the INSECURE_REGISTRY variable below and uncommenting it
+# INSECURE_REGISTRY='--insecure-registry '
+
+# On SELinux System, if you remove the --selinux-enabled option, you
+# also need to turn on the docker_transition_unconfined boolean.
+# setsebool -P docker_transition_unconfined
+
+# Location used for temporary files, such as those created by
+# docker load and build operations. Default is /var/lib/docker/tmp
+# Can be overriden by setting the following environment variable.
+# DOCKER_TMPDIR=/var/tmp
+
+# Controls the /etc/cron.daily/docker-logrotate cron job status.
+# To disable, uncomment the line below.
+# LOGROTATE=false
+EOF
 
 
 
@@ -811,6 +811,11 @@ echo "CannyOS: Cleanup"
 echo "----------------------------------------------------------------------------------------------------------------------------------------------"
 
 
+# Because memory is scarce resource in most cloud/virt environments,
+# and because this impedes forensics, we are differing from the Fedora
+# default of having /tmp on tmpfs.
+echo "Disabling tmpfs for /tmp."
+systemctl mask tmp.mount
 
 # make sure firstboot doesn't start
 echo "RUN_FIRSTBOOT=NO" > /etc/sysconfig/firstboot
