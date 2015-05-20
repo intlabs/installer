@@ -23,9 +23,9 @@ touch /usr/share/nginx/html/cloudconfig/test
 
 # Install the cannyos kernel and ramdisk
 mkdir -p $TFTP_BOOT/cannyos
-curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/initrd.img > $TFTP_BOOT/cannyos/initrd.img
-curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/upgrade.img > $TFTP_BOOT/cannyos/upgrade.img
-curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/vmlinuz > $TFTP_BOOT/cannyos/vmlinuz
+#curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/initrd.img > $TFTP_BOOT/cannyos/initrd.img
+#curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/upgrade.img > $TFTP_BOOT/cannyos/upgrade.img
+#curl http://$pxe_server_ip:$INSTALLER_PORT/installer/lorax/images/pxeboot/vmlinuz > $TFTP_BOOT/cannyos/vmlinuz
 
 # Update pxelinux config to point real server ip
 sed -i "s/%(server_ip)s/$pxe_server_ip/g" /var/lib/tftpboot/pxelinux.cfg/default
