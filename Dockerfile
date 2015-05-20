@@ -11,7 +11,7 @@ RUN yum install -y dnsmasq && \
 
 
 ADD https://raw.github.com/jpetazzo/pipework/master/pipework /bin/pipework
-RUN chmod +x pipework
+RUN chmod +x /bin/pipework
 
 ENV TFTP_BOOT /var/lib/tftpboot
 ENV HTTP_ROOT /usr/share/nginx/html
