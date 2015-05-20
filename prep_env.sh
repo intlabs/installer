@@ -19,8 +19,8 @@ echo $(cat /root/.ssh/id_rsa.pub)
 
 
 
-
-curl https://raw.github.com/jpetazzo/pipework/master/pipework > ~/pipework
+cd ~
+wget https://raw.github.com/jpetazzo/pipework/master/pipework
 chmod +x ~/pipework
 
 
