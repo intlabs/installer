@@ -70,7 +70,7 @@ cat /var/lib/tftpboot/pxelinux.cfg/default
 
 # Launching dnsmasq
 dnsmasq \
-    --interface=eth1
+    --interface=eth1 \
     --dhcp-range=$DHCP_START,$DHCP_END,$DHCP_NETMASK,1h \
     --dhcp-option=option:router,$ROUTER_IP \
     --dhcp-boot=pxelinux.0,pxeserver,$ROUTER_IP \
