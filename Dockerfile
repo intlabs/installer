@@ -7,7 +7,8 @@ RUN yum install -y dnsmasq && \
     yum install -y syslinux && \
     yum install -y tftp-server && \
     yum install -y createrepo && \
-    yum install -y wget
+    yum install -y wget && \
+    yum install -y iptables
 
 
 ADD https://raw.github.com/jpetazzo/pipework/master/pipework /bin/pipework
