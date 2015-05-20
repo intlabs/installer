@@ -39,12 +39,12 @@ sed -i "s/{{ IMAGES_PORT }}/$IMAGES_PORT/g" /usr/share/nginx/html/ks/*
 sed -i "s/{{ IMAGES_PORT }}/$IMAGES_PORT/g" /usr/share/nginx/html/cloudconfig/*
 
 
-# Update discovery token, bootstrap with 3 nodes
-ETCD_DISCOVERY_TOKEN=$(wget -qO- https:\/\/discovery.etcd.io\/new?size=$ETCD_INITIAL_NODES)
 
 echo "ETCD discovery token: $ETCD_DISCOVERY_TOKEN"
 sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/html/ks/*
 sed -i "s,{{ ETCD_DISCOVERY_TOKEN }},$ETCD_DISCOVERY_TOKEN,g" /usr/share/nginx/html/cloudconfig/*
+
+
 
 
 echo "SWARM discovery token: $SWARM_TOKEN"
@@ -52,15 +52,13 @@ sed -i "s,{{ SWARM_TOKEN }},$SWARM_TOKEN,g" /usr/share/nginx/html/ks/*
 sed -i "s,{{ SWARM_TOKEN }},$SWARM_TOKEN,g" /usr/share/nginx/html/cloudconfig/*
 
 
+
+
 nginx
+
 cat /var/lib/tftpboot/pxelinux.cfg/default
 
-
 pxe_server_ip=$( ip -f inet -o addr show $INTERFACE | cut -d\  -f 7 | cut -d/ -f 1 )
-
-DHCP_START=10.30.0.100
-DHCP_END=10.30.0.253
-DHCP_NETMASK=255.255.255.0
 
 dnsmasq \
     --dhcp-range=$INTERFACE,$DHCP_START,$DHCP_END,$DHCP_NETMASK \
@@ -71,6 +69,3 @@ dnsmasq \
     --tftp-root=/var/lib/tftpboot \
     --user=root \
     --no-daemon
-
-
-#docker run --net=host --privileged -it -e INTERFACE=enp5s0 cannyos/installer
